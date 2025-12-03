@@ -1,0 +1,15 @@
+[project]
+name = "blueprint-trader-ai"
+version = "2.0.0"
+description = "HTF Confluence Trading Bot for The5ers Challenge"
+authors = ["Blueprint Trader"]
+requires-python = ">=3.11"
+dependencies = [
+    "discord-py>=2.6.4",
+    "pandas>=2.3.3",
+    "requests>=2.32.5",
+    "numpy>=1.26.0",
+]
+
+[tool.uv]
+dev-dependencies = []

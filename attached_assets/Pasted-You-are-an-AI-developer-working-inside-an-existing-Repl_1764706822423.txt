@@ -1,0 +1,437 @@
+You are an AI developer working inside an existing Replit project that already contains the repo:
+
+  the-tradr-ai-bot-V4-Backup-Correct
+
+IMPORTANT: 
+- Do NOT recreate the project.
+- Do NOT re-import code.
+- Only modify the code that is already in this Replit.
+
+Your goals are VERY specific:
+
+  - Keep the trading STRATEGY and RISK logic exactly as it is.
+  - Keep the BACKTEST logic, commands and challenge logic exactly as they are.
+  - Only adjust:
+      * Discord outputs (what is sent where and when).
+      * Autoscan timing and behavior.
+      * Filtering of historical data so the bot doesn’t spam on startup.
+      * Error handling around Discord / networking.
+  - Prepare a clean hook to later connect a 5%ers High Stakes 10K MT5 account, WITHOUT breaking anything now.
+
+===================================================================
+1. FILES YOU MUST TREAT AS "CORE" (DO NOT CHANGE LOGIC THERE)
+===================================================================
+
+The following files contain strategy, risk, challenge and backtest logic. You may only touch them for VERY small, mechanical things (like imports, type hints or function signatures), and only if absolutely necessary for the Discord output refactor. Do NOT change any trading behavior, parameter values, thresholds or rules here:
+
+  - strategy.py
+  - strategy_core.py
+  - strategy_spec_v4.md
+  - indicators.py
+  - position_sizing.py
+  - challenge_rules.py
+  - challenge_analysis.py
+  - backtest_engine.py
+  - backtest.py
+  - optimizer.py
+  - data.py
+  - data_loader.py
+  - cache.py
+
+Also do not change the number or naming of existing bot commands (e.g. /backtest, /challenge, /pass, etc). They must keep working exactly as before.
+
+All structural and behavioral changes should be implemented mainly in:
+
+  - discord_output.py
+  - formatting.py
+  - main.py
+  - settings.py and/or config.py
+  - trade_state.py (ONLY for tracking & timestamps, not trading logic)
+  - trade_state.json (format if necessary, but DO NOT fake or fabricate trades)
+
+===================================================================
+2. DISCORD CHANNEL ROLES & ROUTING
+===================================================================
+
+We have three conceptual Discord channels (the actual IDs should be configured via env or settings):
+
+  1) SCAN / SETUP CHANNEL
+     - Name: e.g. #scan-setup  (or similar)
+     - Purpose: 
+         * Run commands like /backtest, /challenge, /pass.
+         * Receive autoscan outputs for potential setups (4/7 confluence).
+         * Show when a potential setup becomes a TRIGGERED trade, but only as a lightweight note.
+     - This is the "workbench" / analysis channel.
+
+  2) TRADES CHANNEL
+     - Name: e.g. #trades
+     - Purpose:
+         * Each time a NEW trade is opened in real-time (not backtest), create 1 clean, well-structured embed here.
+         * That embed must contain:
+             - Instrument / symbol.
+             - Direction (Long / Short).
+             - Entry price.
+             - Stop Loss.
+             - All Take Profit levels (TP1, TP2, TP3 if available).
+             - Position size / lot size (calculated according to the existing High Stakes 10K account rules).
+             - Time & date the trade was opened (in a consistent timezone).
+             - Optional: confluence score and brief textual reasons, if already available from the strategy.
+         * This channel must only receive ACTUAL trades, not scans or backtests.
+
+  3) TRADE UPDATES CHANNEL
+     - Name: e.g. #trade-updates
+     - Purpose:
+         * Only receive messages when:
+             - A Stop Loss is hit, or
+             - A Take Profit (any TP level) is hit, or
+             - The trade is fully closed.
+         * Each update must clearly mention:
+             - Instrument / symbol.
+             - Direction.
+             - Which event happened (e.g. "TP1 hit", "TP2 hit", "Stop Loss hit", "Trade closed").
+             - Realized P/L for that event (if the system already has this).
+             - The original trade ENTRY datetime (copied from trade_state, not "now").
+             - The event datetime (now).
+         * Do NOT send any generic logs or status messages here.
+
+Implement channel IDs in a single centralized configuration place, e.g.:
+
+  - In settings.py or config.py, add:
+      DISCORD_SCAN_CHANNEL_ID
+      DISCORD_TRADES_CHANNEL_ID
+      DISCORD_TRADE_UPDATES_CHANNEL_ID
+
+  - Read them from environment variables if they’re not already present. 
+  - Fail gracefully with a clear console log if a channel ID is missing, but do not crash the bot. The bot should still run and skip posting to that channel if misconfigured.
+
+===================================================================
+3. AUTOSCAN BEHAVIOR & TIMING
+===================================================================
+
+Current problem:
+- When the bot starts, it sends a lot of outputs in multiple channels.
+- It may be re-sending old trades / old scans.
+- The user wants the first scan only 4 hours after the bot starts, and no startup spam.
+
+You must implement the following behavior:
+
+  1) NO DISCORD OUTPUT ON STARTUP
+     - When the bot process starts and connects to Discord / Oanda / data, it should:
+         * Log minimal info to the console (Replit logs) to show it’s running.
+         * NOT send any messages to any Discord channels at startup.
+     - This includes:
+         * No banner or "bot online" messages.
+         * No historical trade dumps.
+         * No backtest or challenge summaries.
+         * No autoscan output yet.
+
+  2) DELAY FIRST AUTOSCAN BY 4 HOURS
+     - Use the existing scheduling mechanism in main.py (likely an async loop or a scheduler) and implement:
+         * First autoscan run occurs 4 hours after the bot is fully ready and connected.
+         * After that, continue using the existing scan interval (do NOT shorten it unless necessary).
+     - This delay should not block the bot from responding to manual commands; only the autoscan is delayed.
+
+  3) AUTOSCAN IN SCAN CHANNEL ONLY
+     - Ensure that autoscan output (the periodic scan) goes ONLY to the SCAN / SETUP channel.
+     - Autoscan should:
+         * Evaluate instruments using the existing strategy and confluence system.
+         * For each instrument with at least 4/7 confluence, produce a single embed message in the scan channel:
+             - Example fields:
+                 - Instrument
+                 - Direction
+                 - Confluence score (e.g. "4/7", "5/7")
+                 - Key reasons / confirmations (from the current logic, if available).
+                 - Proposed entry zone / price, SL, TPs (if the strategy already provides them).
+                 - Status: "WATCHING" (not yet triggered).
+         * Do NOT spam duplicates. If the same setup is still valid and nothing new happened since the last autoscan, either:
+             - Do not post it again, OR
+             - Post a very short updated embed that clearly indicates it’s an update, not a new setup.
+       You can track "last sent" setups using a small in-memory cache or via trade_state.
+
+  4) WHEN A SETUP TRIGGERS INTO A REAL TRADE
+     - Keep using the existing trade logic; do not change when or how trades are opened.
+     - When the strategy decides to open a trade:
+         * Create a NEW trade in trade_state / trade_state.json if not already present.
+         * Post ONE clean trade embed in the TRADES channel (see section 4).
+         * Optionally, post a short note in the SCAN channel like:
+             "[PAIR] Long setup triggered and moved to live trade (see #trades)"
+           but this should be a concise message, not a full trade card again.
+
+===================================================================
+4. TRADE EMBEDS FORMAT & CONTENT
+===================================================================
+
+You must standardize the Discord outputs using embeds (discord.Embed or equivalent in the library used) for:
+
+  - New trades (TRADES channel).
+  - Trade updates (TRADE UPDATES channel).
+  - Autoscan setups (SCAN channel).
+
+For NEW trades (TRADES channel), each embed should contain at least:
+
+  - Title: e.g. "NEW TRADE: EURUSD LONG" or "NEW TRADE: XAUUSD SHORT"
+  - Fields:
+      * Instrument
+      * Direction (Long / Short)
+      * Entry price
+      * Stop Loss price
+      * TP1 / TP2 / TP3 prices (only include levels that exist in the current strategy output)
+      * Position size / lot size (this must use the existing High Stakes 10K risk logic; do NOT change the calculation, only display it)
+      * Confluence (e.g. "5/7") if available
+      * Entry datetime (in a consistent timezone, e.g. UTC or the system timezone)
+  - Footer or extra field:
+      * Challenge context, e.g. "5%ers High Stakes 10K – live risk sizing."
+
+Do NOT change the underlying position sizing or challenge rules; only read the values they already compute and display them nicely.
+
+For TRADE UPDATES (TRADE UPDATES channel):
+
+  - When SL or TP is hit (or trade closed), create one embed per event:
+      * Title: e.g. "TP1 HIT: EURUSD LONG" or "STOP LOSS HIT: GBPUSD SHORT"
+      * Fields:
+          - Instrument
+          - Direction
+          - Event (TP1, TP2, TP3, SL, Full close, Partial close)
+          - Realized P/L for that leg if available (in % and/or in account currency)
+          - Original entry datetime (MUST come from trade_state)
+          - Event datetime (now)
+      * Optionally, a short text summary: "Trade ran from [entry_price] to [hit_price] over [X days/hours]."
+
+===================================================================
+5. TRADE STATE & AVOIDING HISTORICAL SPAM
+===================================================================
+
+Current problem:
+- When the bot starts, it may reload existing trades and push many messages to Discord, flooding channels.
+
+You must ensure:
+
+  1) On startup, trade_state.py / trade_state.json is used ONLY to restore internal state, NOT to spam Discord.
+     - When the bot reads existing trades from trade_state.json at startup:
+         * Do not send them to TRADES or TRADE UPDATES channels.
+         * Treat them as already-known, historical data.
+
+  2) Each trade and each update must only be sent to Discord once:
+     - Use a robust mechanism in trade_state to track:
+         * Whether the "new trade" notification was already sent.
+         * Which TP levels / SL events have already been notified.
+     - For example, in each trade’s state you can store:
+         - notified_open (bool)
+         - notified_tp1, notified_tp2, notified_tp3 (bool)
+         - notified_sl (bool)
+     - When the trading logic triggers:
+         * If notified_open is False and the trade is opened now -> send NEW trade embed and set notified_open = True.
+         * When price hits TP1 and notified_tp1 is False -> send TP1 embed, set notified_tp1 = True.
+         * Similarly for other events.
+
+  3) Backtest & challenge commands:
+     - When the user runs backtests or challenge commands in the SCAN channel, the outputs should:
+         * Stay in the SCAN channel only.
+         * Use a clean, readable format (can be text or embeds).
+         * NOT accidentally create or update live trade_state and NOT post to TRADES or TRADE UPDATES.
+     - Make sure the functions that render backtest/challenge output are clearly separated from the functions that announce live trades.
+
+===================================================================
+6. COMMAND BEHAVIOR & CHANNELS
+===================================================================
+
+The user wants to be able to run all bot commands in the SCAN channel.
+
+Implement or verify the following:
+
+  - Slash commands or text commands (e.g. /backtest, /challenge, /pass, /output, etc.) must:
+      * Respond in the channel where they are invoked.
+      * Typically, they will be invoked in the SCAN channel.
+      * Output for these commands (backtest tables, challenge results, etc.) must not pollute TRADES or TRADE UPDATES.
+
+  - Do NOT change:
+      * The existing command names.
+      * The required arguments.
+      * The core logic behind the commands.
+
+You may, however, make the formatting of their outputs cleaner (e.g. move from plain text to structured code blocks or embeds) as long as you preserve all information.
+
+===================================================================
+7. ERROR HANDLING & LOGGING
+===================================================================
+
+Improve robustness without changing trade logic:
+
+  - Wrap Discord send operations in try/except blocks:
+      * If a send fails (e.g. missing permissions, invalid channel ID, rate limits), log the error to the console.
+      * Avoid crashing the bot on Discord errors.
+      * Do NOT retry aggressively in a loop that could spam Discord; one or a few retries with backoff is enough, or just log and skip.
+
+  - For network / API errors (Oanda, price data, etc.):
+      * Keep any existing retry logic intact.
+      * If you add new error handling, do not alter how trades are opened/closed; only log more clearly.
+
+  - Never send raw stack traces to Discord channels. 
+    All error details should be in console logs only.
+
+===================================================================
+8. PREPARATION FOR 5%ERS HIGH STAKES 10K MT5 ACCOUNT
+===================================================================
+
+The bot is already optimized for a High Stakes 10K account from The 5%ers, and this must remain the basis for lot sizing and risk management.
+
+We want to PREPARE for linking a live 5%ers MT5 account (running on a Windows VM) without breaking the current code:
+
+  - Add a clear abstraction layer for trade execution, if it doesn’t already exist. For example:
+      * A module-level function or class that the strategy calls like `execute_trade(trade)` and `update_trade(trade, event)`.
+      * Inside this layer, keep the current execution path exactly as it is for now (Oanda or internal simulation).
+
+  - Add placeholder / stub logic for MT5 integration:
+      * Create a small, well-documented module (e.g. mt5_bridge.py) or a section inside an existing file that:
+          - Exposes functions like:
+              - send_order_to_mt5(trade)
+              - close_order_in_mt5(trade, event)
+          - Currently, these functions can be NO-OP or simple logging stubs.
+      * Guard all MT5-related code behind a configuration flag, e.g.:
+              USE_MT5_EXECUTION = False
+        in settings.py or config.py, toggleable via environment variables.
+
+  - Do NOT attempt to actually connect to MT5 or require Windows-specific libraries inside Replit.
+    We only want the structure so that a separate script running on the Windows VM can later plug into this layer.
+
+===================================================================
+9. CLEANUP & CONSISTENCY
+===================================================================
+
+After implementing everything above:
+
+  1) Ensure all imports are consistent and there are no circular imports.
+  2) Run the bot in Replit and verify:
+       - It starts without sending any messages to Discord.
+       - It responds to commands in the SCAN channel.
+       - It performs the first autoscan only after 4 hours (you may temporarily shorten this during development, but restore it to 4 hours in the final code).
+       - Autoscan messages go ONLY to the SCAN channel.
+       - New trades only create messages in the TRADES channel (plus an optional short note in SCAN).
+       - Trade updates only appear in the TRADE UPDATES channel.
+       - Historical trades from trade_state.json do not trigger new Discord messages on startup.
+  3) Keep logs in the console clean and informative, but not excessively verbose.
+
+===================================================================
+10. SUMMARY OF NON-NEGOTIABLE CONSTRAINTS
+===================================================================
+
+- DO NOT change strategy, confluence, market structure logic, or Fibonacci / SR / liquidity rules.
+- DO NOT change risk management values, lot size calculations, or challenge rules.
+- DO NOT change the existing commands’ behavior or parameters, except for where their output is sent and how it is formatted.
+- DO NOT add any new external services that require paid plans or external accounts beyond what is already used.
+- DO ensure:
+    * Clean, non-spammy Discord outputs aligned with the three-channel structure.
+    * No spam on startup.
+    * Autoscan starts 4 hours after boot.
+    * Trade updates are accurate, with entry date and event date.
+    * The system remains ready to use the High Stakes 10K account logic as it does today.
+
+===================================================================
+11. DISCORD OUTPUT DESIGN & VISUAL STYLE
+===================================================================
+
+You must also standardize the VISUAL style of all embeds so the Discord channels look clean and professional, similar to high-quality trading signal servers.
+
+General design principles for ALL embeds:
+  - Use ONE embed per event (setup, new trade, update).
+  - Keep text concise and scannable; no long paragraphs.
+  - Use consistent field ordering across all embeds.
+  - Use at most 1–2 emojis in the title to indicate type/status.
+  - Avoid noisy decorations, ASCII art, or multi-message spam.
+
+Color coding:
+  - Use a consistent embed color scheme (e.g. using a hex color or predefined color constant):
+      * Neutral/blue for SCAN setups.
+      * Green for LONG trades / TP hits.
+      * Red for SHORT trades / SL hits.
+  - Implement this inside formatting.py (or equivalent) as constants, for example:
+      COLOR_SCAN_NEUTRAL
+      COLOR_LONG
+      COLOR_SHORT
+      COLOR_ALERT_SL
+
+SCAN / SETUP channel embeds:
+  - Title format:
+      "[SETUP] EURUSD LONG (4/7)" or "[SETUP] GBPJPY SHORT (5/7)"
+      Optional emoji: e.g. "🧭" or "📊" at the start if you want.
+  - Recommended fields order:
+      1) "Instrument"
+      2) "Direction"
+      3) "Confluence"
+      4) "Entry zone" (or "Entry price" if single)
+      5) "Stop Loss"
+      6) "Targets" (TP1 / TP2 / TP3 summarised)
+      7) "Timeframe / structure" if readily available from the strategy
+  - Footer:
+      "Autoscan setup – not a live trade yet"
+  - Use a neutral color (blue/grey).
+
+TRADES channel embeds (new live trade):
+  - Title format:
+      "✅ NEW TRADE: EURUSD LONG" or "✅ NEW TRADE: XAUUSD SHORT"
+  - Optional emoji: leading "✅" (or similar) only; avoid extra clutter.
+  - Recommended fields order:
+      1) "Instrument": EURUSD
+      2) "Direction": LONG / SHORT
+      3) "Entry": 1.12345
+      4) "Stop Loss": 1.11500
+      5) "TPs":
+           - TP1: 1.13000
+           - TP2: 1.13500
+           - TP3: 1.14000
+         (either as one multi-line field, or separate TP1/TP2/TP3 fields)
+      6) "Size (lots)": 0.42  (use existing 10K risk logic)
+      7) "Confluence": e.g. "5 / 7"
+      8) "Opened": YYYY-MM-DD HH:MM (timezone clearly stated, e.g. "UTC")
+  - Footer:
+      "5%ers High Stakes 10K sizing – strategy v4"
+  - Color:
+      * Greenish for LONG trades.
+      * Redish for SHORT trades.
+
+TRADE UPDATES channel embeds:
+  - Title formats:
+      * "🎯 TP1 HIT: EURUSD LONG"
+      * "🎯 TP2 HIT: EURUSD LONG"
+      * "🏁 TRADE CLOSED: EURUSD LONG"
+      * "⛔ STOP LOSS HIT: GBPUSD SHORT"
+  - Recommended fields order:
+      1) "Instrument"
+      2) "Direction"
+      3) "Event": TP1 / TP2 / TP3 / SL / Closed
+      4) "Entry": price
+      5) "Exit": price at TP/SL/close
+      6) "P/L": +X.X% / -Y.Y% and/or +$X / -$Y (if available from existing logic)
+      7) "Entered at": original entry datetime (from trade_state)
+      8) "Event time": now
+  - Footer:
+      e.g. "Managed by Blueprint Tradr AI Bot – strategy v4"
+  - Color:
+      * Greenish for TP hits and profitable closes.
+      * Redish for SL hits.
+      * Neutral/blue for breakeven or informational updates.
+
+Optional short note in SCAN channel when a setup becomes a trade:
+  - A single small, non-embed message or compact embed:
+      Title: "TRADE TRIGGERED: EURUSD LONG"
+      Description: "Setup moved to live trade. Full details in #trades."
+  - No need to repeat all trade details here; keep this as a pointer.
+
+Backtest / challenge outputs in SCAN channel:
+  - You may keep them as text or convert to clean embeds:
+      * If text: use Discord code blocks ``` for tables or summaries.
+      * If embeds: use neutral colors, titles like "[BACKTEST RESULT]" or "[CHALLENGE SUMMARY]", and avoid flooding the channel (prefer one embed per command).
+
+Global style consistency:
+  - Implement a helper layer in formatting.py to generate embeds:
+      * e.g. functions:
+          - make_setup_embed(setup_data)
+          - make_new_trade_embed(trade_data)
+          - make_trade_update_embed(update_data)
+          - make_backtest_embed(result_data)
+      * All Discord output functions should call these helpers instead of building embeds inline.
+  - This ensures every message uses the same style, colors, and field order.
+
+Remember:
+  - Do NOT alter what the strategy decides.
+  - Only change how those decisions are presented in Discord, following the layouts and style above.

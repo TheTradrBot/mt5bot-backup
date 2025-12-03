@@ -1,0 +1,54 @@
+~/workspace$ cd ~/workspace  # Navigate to your project directory
+git remote set-url origin https://github.com/TheTradrBot/mt5bot-new.git  # Update remote URL
+git add -A  # Stage all changes
+git commit -m "Initial commit: Blueprint Trader AI - MT5 Trading Bot"  # Commit changes
+git branch -M main  # Rename branch to main if it's not already
+git push -u origin main --force  # Push to the new repository
+error: could not lock config file .git/config: File exists
+fatal: could not set 'remote.origin.url' to 'https://github.com/TheTradrBot/mt5bot-new.git'
+error: 'new-directory/' does not have a commit checked out
+fatal: adding files failed
+On branch main
+Your branch is ahead of 'origin/main' by 5 commits.
+  (use "git push" to publish your local commits)
+
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+    new-directory/
+
+nothing added to commit but untracked files present (use "git add" to track)
+error: could not lock config file .git/config
+fatal: branch is renamed, but update of config-file failed
+remote: Repository not found.
+fatal: repository 'https://github.com/TheTradrBot/mt5bot/' not found
+~/workspace$ rm -f ~/workspace/.git/config.lock
+~/workspace$ git remote set-url origin https://github.com/TheTradrBot/mt5bot-new.git
+~/workspace$ cd ~/workspace  # Navigate to your project directory
+git add -A  # Stage all changes
+git commit -m "Initial commit: Blueprint Trader AI - MT5 Trading Bot"  # Commit changes
+error: 'new-directory/' does not have a commit checked out
+fatal: adding files failed
+On branch main
+Your branch is ahead of 'origin/main' by 5 commits.
+  (use "git push" to publish your local commits)
+
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+    new-directory/
+
+nothing added to commit but untracked files present (use "git add" to track)
+~/workspace$ git branch -M main # Rename the branch to main if it's not already
+~/workspace$ git push -u origin main --force  # Push to the new repository
+Enumerating objects: 147, done.
+Counting objects: 100% (147/147), done.
+Delta compression using up to 8 threads
+Compressing objects: 100% (98/98), done.
+Writing objects: 100% (147/147), 262.33 KiB | 37.48 MiB/s, done.
+Total 147 (delta 43), reused 138 (delta 41), pack-reused 0 (from 0)
+remote: Resolving deltas: 100% (43/43), done.
+remote: fatal: did not receive expected object 8a40cb9c99ac418deda2aa23bb7372cb80a5898d
+error: remote unpack failed: index-pack failed
+To https://github.com/TheTradrBot/mt5bot-new.git
+ ! [remote rejected] main -> main (failed)
+error: failed to push some refs to 'https://github.com/TheTradrBot/mt5bot-new.git'
+~/workspace$ 
