@@ -8,3 +8,6 @@ python-dotenv
 flask
 flask-cors
 python-dotenv
+flask
+flask-cors
+python-dotenv
