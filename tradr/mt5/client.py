@@ -38,6 +38,22 @@ class Position:
 
 
 @dataclass
+class PendingOrder:
+    """Represents a pending order."""
+    ticket: int
+    symbol: str
+    type: int
+    volume: float
+    price: float
+    sl: float
+    tp: float
+    time_setup: datetime
+    expiration: datetime
+    magic: int
+    comment: str
+
+
+@dataclass
 class TradeResult:
     """Result of a trade operation."""
     success: bool
@@ -409,3 +425,130 @@ class MT5Client:
             "lot_step": info.volume_step,
             "contract_size": info.trade_contract_size,
         }
+    
+    def place_pending_order(
+        self,
+        symbol: str,
+        direction: str,
+        volume: float,
+        entry_price: float,
+        sl: float,
+        tp: float,
+        expiration_hours: int = 24,
+    ) -> TradeResult:
+        """
+        Place a pending limit/stop order.
+        
+        For bullish: BUY_LIMIT if entry < ask, else BUY_STOP
+        For bearish: SELL_LIMIT if entry > bid, else SELL_STOP
+        """
+        if not self.connected:
+            return TradeResult(success=False, error="Not connected")
+        
+        mt5 = self._import_mt5()
+        
+        tick = mt5.symbol_info_tick(symbol)
+        if tick is None:
+            return TradeResult(success=False, error=f"Cannot get tick for {symbol}")
+        
+        if direction.lower() == "bullish":
+            if entry_price < tick.ask:
+                order_type = mt5.ORDER_TYPE_BUY_LIMIT
+            else:
+                order_type = mt5.ORDER_TYPE_BUY_STOP
+        else:
+            if entry_price > tick.bid:
+                order_type = mt5.ORDER_TYPE_SELL_LIMIT
+            else:
+                order_type = mt5.ORDER_TYPE_SELL_STOP
+        
+        expiration_time = datetime.now(timezone.utc) + timedelta(hours=expiration_hours)
+        expiration_timestamp = int(expiration_time.timestamp())
+        
+        request = {
+            "action": mt5.TRADE_ACTION_PENDING,
+            "symbol": symbol,
+            "volume": volume,
+            "type": order_type,
+            "price": entry_price,
+            "sl": sl,
+            "tp": tp,
+            "magic": self.MAGIC_NUMBER,
+            "comment": self.COMMENT,
+            "type_time": mt5.ORDER_TIME_SPECIFIED,
+            "expiration": expiration_timestamp,
+            "type_filling": mt5.ORDER_FILLING_RETURN,
+        }
+        
+        result = mt5.order_send(request)
+        
+        if result is None:
+            return TradeResult(success=False, error="Order send returned None")
+        
+        if result.retcode != mt5.TRADE_RETCODE_DONE:
+            return TradeResult(
+                success=False,
+                error=f"Pending order failed: {result.comment} (code: {result.retcode})"
+            )
+        
+        return TradeResult(
+            success=True,
+            order_id=result.order,
+            price=entry_price,
+            volume=volume,
+        )
+    
+    def cancel_pending_order(self, ticket: int) -> bool:
+        """Cancel a pending order by ticket."""
+        if not self.connected:
+            return False
+        
+        mt5 = self._import_mt5()
+        
+        request = {
+            "action": mt5.TRADE_ACTION_REMOVE,
+            "order": ticket,
+        }
+        
+        result = mt5.order_send(request)
+        
+        return result is not None and result.retcode == mt5.TRADE_RETCODE_DONE
+    
+    def get_pending_orders(self, symbol: str = None) -> List[PendingOrder]:
+        """Get pending orders, optionally filtered by symbol."""
+        if not self.connected:
+            return []
+        
+        mt5 = self._import_mt5()
+        
+        if symbol:
+            orders = mt5.orders_get(symbol=symbol)
+        else:
+            orders = mt5.orders_get()
+        
+        if orders is None:
+            return []
+        
+        result = []
+        for order in orders:
+            exp_time = datetime.fromtimestamp(order.time_expiration, tz=timezone.utc) if order.time_expiration > 0 else datetime.max.replace(tzinfo=timezone.utc)
+            result.append(PendingOrder(
+                ticket=order.ticket,
+                symbol=order.symbol,
+                type=order.type,
+                volume=order.volume_current,
+                price=order.price_open,
+                sl=order.sl,
+                tp=order.tp,
+                time_setup=datetime.fromtimestamp(order.time_setup, tz=timezone.utc),
+                expiration=exp_time,
+                magic=order.magic,
+                comment=order.comment,
+            ))
+        
+        return result
+    
+    def get_my_pending_orders(self) -> List[PendingOrder]:
+        """Get pending orders placed by this bot (by magic number)."""
+        all_orders = self.get_pending_orders()
+        return [o for o in all_orders if o.magic == self.MAGIC_NUMBER]
