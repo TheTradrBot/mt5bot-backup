@@ -124,21 +124,10 @@ class LiveTradingBot:
         print(f"MARKET SCAN - {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M UTC')}")
         print(f"{'='*70}")
 
-        # All tradeable assets
-        all_symbols = FOREX_PAIRS + METALS + INDICES + ENERGIES + CRYPTO_ASSETS
-
-        # Remove exotics (keep major pairs only)
-        forex_majors = [
-            "EUR_USD", "GBP_USD", "USD_JPY", "USD_CHF", "USD_CAD", "AUD_USD", "NZD_USD",
-            "EUR_GBP", "EUR_JPY", "GBP_JPY", "AUD_JPY", "NZD_JPY"
-        ]
-
-        # Custom crypto/indices
-        crypto = ["BTC_USD", "ETH_USD"]
-        indices = ["SPX500_USD", "NAS100_USD"]
-        commodities = ["XAU_USD", "XAG_USD", "WTICO_USD"]
-
-        all_symbols = forex_majors + crypto + indices + commodities
+        # Use ALL configured tradeable assets from config.py (32 symbols total)
+        all_symbols = FOREX_PAIRS + METALS + INDICES + CRYPTO_ASSETS
+        
+        print(f"Scanning {len(all_symbols)} symbols...")
 
         params = get_default_params()
         signals_found = 0
