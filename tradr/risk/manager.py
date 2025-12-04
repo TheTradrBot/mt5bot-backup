@@ -161,8 +161,8 @@ class RiskManager:
     
     MAX_SINGLE_TRADE_RISK_PCT = 1.0
     MAX_CUMULATIVE_RISK_PCT = 3.0
-    DAILY_LOSS_BUFFER_PCT = 4.5
-    TOTAL_DD_BUFFER_PCT = 9.0
+    DAILY_LOSS_BUFFER_PCT = 4.0  # Trigger protective close at 4.0% (1% safety margin)
+    TOTAL_DD_BUFFER_PCT = 8.0     # Trigger protective close at 8.0% (2% safety margin)
     
     DEFAULT_RISK_PCT = 0.01
     

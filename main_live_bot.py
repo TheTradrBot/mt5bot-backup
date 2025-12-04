@@ -617,11 +617,11 @@ class LiveTradingBot:
         """
         Monitor live P/L and trigger emergency close if needed.
         
-        Checks current equity against buffer thresholds:
-        - 4.5% daily loss triggers emergency close (before 5% limit)
-        - 9% total drawdown triggers emergency close (before 10% limit)
-        
-        Also checks individual position risk and closes high-risk positions first.
+        Strategy:
+        1. Check current daily loss and total drawdown
+        2. If approaching limits, close highest-risk positions first
+        3. Re-check after each close to avoid overshooting
+        4. Cancel pending orders if getting close to limits
         
         Returns:
             True if emergency close was triggered, False otherwise
@@ -637,56 +637,101 @@ class LiveTradingBot:
         if current_equity <= 0:
             return False
         
-        # Check individual position risk first
-        positions = self.mt5.get_my_positions()
-        for pos in positions:
-            potential_loss = abs(pos.price_open - pos.sl) * pos.volume * 10  # Rough estimate
-            risk_pct = (potential_loss / current_balance) * 100 if current_balance > 0 else 0
-            
-            # Close positions risking more than 3% individually
-            if risk_pct > 3.0:
-                log.warning(f"[{pos.symbol}] Position risks {risk_pct:.1f}% (${potential_loss:.0f}) - CLOSING to prevent breach")
-                result = self.mt5.close_position(pos.ticket)
-                if result.success:
-                    log.info(f"[{pos.symbol}] High-risk position closed at {result.price}")
-                    self.risk_manager.record_trade_close(
-                        order_id=pos.ticket,
-                        exit_price=result.price,
-                        pnl_usd=pos.profit,
-                    )
+        # Calculate current exposure
+        day_start = self.risk_manager.state.day_start_balance
+        initial = self.risk_manager.state.initial_balance
         
-        should_close, reason = self.risk_manager.should_emergency_close(current_equity)
+        daily_loss_pct = 0.0
+        if current_equity < day_start:
+            daily_loss_pct = ((day_start - current_equity) / day_start) * 100
         
-        if should_close:
-            log.error("=" * 70)
-            log.error("EMERGENCY CLOSE TRIGGERED!")
-            log.error(reason)
-            log.error("=" * 70)
-            
-            positions = self.mt5.get_my_positions()
-            for pos in positions:
-                log.warning(f"Emergency closing position: {pos.symbol} ticket={pos.ticket}")
-                result = self.mt5.close_position(pos.ticket)
-                if result.success:
-                    log.info(f"  Closed {pos.symbol} at {result.price}")
-                    self.risk_manager.record_trade_close(
-                        order_id=pos.ticket,
-                        exit_price=result.price,
-                        pnl_usd=pos.profit,
-                    )
-                else:
-                    log.error(f"  Failed to close {pos.symbol}: {result.error}")
-            
+        total_dd_pct = 0.0
+        if current_equity < initial:
+            total_dd_pct = ((initial - current_equity) / initial) * 100
+        
+        # Cancel pending orders if approaching limits (above 3.5% daily or 7% total)
+        if daily_loss_pct >= 3.5 or total_dd_pct >= 7.0:
             pending_orders = self.mt5.get_my_pending_orders()
-            for order in pending_orders:
-                log.warning(f"Emergency cancelling pending order: {order.symbol} ticket={order.ticket}")
-                self.mt5.cancel_pending_order(order.ticket)
+            if pending_orders:
+                log.warning(f"Approaching limits (Daily: {daily_loss_pct:.1f}%, DD: {total_dd_pct:.1f}%) - cancelling {len(pending_orders)} pending orders")
+                for order in pending_orders:
+                    self.mt5.cancel_pending_order(order.ticket)
+                self.pending_setups.clear()
+                self._save_pending_setups()
+        
+        # Start closing positions if above 4.0% daily or 8.0% total
+        if daily_loss_pct >= 4.0 or total_dd_pct >= 8.0:
+            positions = self.mt5.get_my_positions()
+            if not positions:
+                return False
             
-            self.pending_setups.clear()
-            self._save_pending_setups()
+            log.warning("=" * 70)
+            log.warning(f"PROTECTIVE CLOSE TRIGGERED!")
+            log.warning(f"Daily Loss: {daily_loss_pct:.2f}% | Total DD: {total_dd_pct:.2f}%")
+            log.warning(f"Closing positions gradually to stay under limits")
+            log.warning("=" * 70)
             
-            log.error("Emergency close complete - trading halted until restart")
-            return True
+            # Sort positions by unrealized loss (worst first)
+            positions_sorted = sorted(positions, key=lambda p: p.profit)
+            
+            for pos in positions_sorted:
+                log.warning(f"Closing {pos.symbol} (P/L: ${pos.profit:.2f}, Volume: {pos.volume})")
+                result = self.mt5.close_position(pos.ticket)
+                
+                if result.success:
+                    log.info(f"  ✓ Closed at {result.price}, P/L: ${pos.profit:.2f}")
+                    self.risk_manager.record_trade_close(
+                        order_id=pos.ticket,
+                        exit_price=result.price,
+                        pnl_usd=pos.profit,
+                    )
+                    
+                    # Re-check after closing
+                    account = self.mt5.get_account_info()
+                    if account:
+                        new_equity = account.get('equity', 0)
+                        new_daily_loss = 0.0
+                        new_total_dd = 0.0
+                        
+                        if new_equity < day_start:
+                            new_daily_loss = ((day_start - new_equity) / day_start) * 100
+                        if new_equity < initial:
+                            new_total_dd = ((initial - new_equity) / initial) * 100
+                        
+                        log.info(f"  After close: Daily Loss: {new_daily_loss:.2f}%, Total DD: {new_total_dd:.2f}%")
+                        
+                        # Stop if we're back under 3.5% daily and 7% total
+                        if new_daily_loss < 3.5 and new_total_dd < 7.0:
+                            log.info("  Back under safe thresholds - stopping protective close")
+                            return False
+                        
+                        # Emergency if we've breached hard limits
+                        if new_daily_loss >= 5.0 or new_total_dd >= 10.0:
+                            log.error("  BREACH DETECTED - closing all remaining positions immediately!")
+                            break
+                else:
+                    log.error(f"  ✗ Failed to close: {result.error}")
+            
+            # Check final state
+            account = self.mt5.get_account_info()
+            if account:
+                final_equity = account.get('equity', 0)
+                final_daily = 0.0
+                final_dd = 0.0
+                
+                if final_equity < day_start:
+                    final_daily = ((day_start - final_equity) / day_start) * 100
+                if final_equity < initial:
+                    final_dd = ((initial - final_equity) / initial) * 100
+                
+                if final_daily >= 5.0 or final_dd >= 10.0:
+                    log.error(f"LIMIT BREACH AFTER CLOSE: Daily {final_daily:.2f}%, DD {final_dd:.2f}%")
+                    self.risk_manager.state.failed = True
+                    self.risk_manager.state.fail_reason = f"Limit breached: Daily {final_daily:.1f}%, DD {final_dd:.1f}%"
+                    self.risk_manager.save_state()
+                    return True
+            
+            return False
         
         return False
     
