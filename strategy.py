@@ -9,7 +9,6 @@ from config import (
     FOREX_PAIRS,
     METALS,
     INDICES,
-    ENERGIES,
     CRYPTO_ASSETS,
     SIGNAL_MODE,
 )
@@ -186,10 +185,6 @@ def scan_indices() -> Tuple[List[ScanResult], List[ScanResult]]:
     return scan_group(INDICES)
 
 
-def scan_energies() -> Tuple[List[ScanResult], List[ScanResult]]:
-    return scan_group(ENERGIES)
-
-
 def scan_all_markets() -> Dict[str, Tuple[List[ScanResult], List[ScanResult]]]:
     markets: Dict[str, Tuple[List[ScanResult], List[ScanResult]]] = {}
 
@@ -207,11 +202,6 @@ def scan_all_markets() -> Dict[str, Tuple[List[ScanResult], List[ScanResult]]]:
     indices_results, indices_trades = scan_indices()
     markets["Indices"] = (indices_results, indices_trades)
     print(f"[scan] Indices done: {len(indices_results)} results")
-
-    print("[scan] Scanning Energies...")
-    energies_results, energies_trades = scan_energies()
-    markets["Energies"] = (energies_results, energies_trades)
-    print(f"[scan] Energies done: {len(energies_results)} results")
 
     print("[scan] Scanning Crypto...")
     crypto_results, crypto_trades = scan_crypto()

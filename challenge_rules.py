@@ -1,11 +1,13 @@
 """
-5%ers High Stakes 10K Challenge Rules
+FTMO Challenge Rules
 
-This module centralizes all 5%ers challenge rules and configuration.
+This module centralizes all FTMO challenge rules and configuration.
 Used by backtest, challenge simulation, and live trading to ensure consistency.
 
-Rules sourced from: https://the5ers.com/high-stakes/
+Rules sourced from: https://ftmo.com/en/trading-objectives/
 Last updated: December 2024
+
+Note: Variable names kept as 'Fivers' for backward compatibility with existing code.
 """
 
 from dataclasses import dataclass, field
@@ -15,33 +17,33 @@ from enum import Enum
 
 
 class ChallengeStep(Enum):
-    STEP_1 = 1
-    STEP_2 = 2
+    STEP_1 = 1  # FTMO Challenge
+    STEP_2 = 2  # Verification
     FUNDED = 3
 
 
 @dataclass
 class FiversRules:
-    """5%ers High Stakes 10K Challenge Rules"""
+    """FTMO Challenge Rules (variable name kept for backward compatibility)"""
 
     account_size: float = 10_000.0
     account_currency: str = "USD"
 
-    step1_profit_target_pct: float = 8.0
-    step2_profit_target_pct: float = 5.0
-    funded_monthly_target_pct: float = 5.0
+    step1_profit_target_pct: float = 10.0  # FTMO Challenge: 10% target
+    step2_profit_target_pct: float = 5.0   # Verification: 5% target
+    funded_monthly_target_pct: float = 0.0  # No monthly target when funded
 
-    max_daily_loss_pct: float = 5.0
-    max_total_drawdown_pct: float = 10.0
+    max_daily_loss_pct: float = 5.0        # 5% daily loss limit
+    max_total_drawdown_pct: float = 10.0   # 10% max drawdown
 
-    min_profitable_days: int = 3
-    profitable_day_threshold_pct: float = 0.5
+    min_profitable_days: int = 0           # FTMO has no min trading days
+    profitable_day_threshold_pct: float = 0.0
 
-    risk_per_trade_pct: float = 0.75
-    max_open_risk_pct: float = 3.0
+    risk_per_trade_pct: float = 1.0        # 1% risk per trade (recommended)
+    max_open_risk_pct: float = 3.0         # Max 3% total open risk
 
-    inactivity_days_limit: int = 30
-    news_trading_buffer_minutes: int = 2
+    inactivity_days_limit: int = 30        # 30 days inactivity limit
+    news_trading_buffer_minutes: int = 2   # 2 min before/after news
 
     @property
     def step1_target_usd(self) -> float:

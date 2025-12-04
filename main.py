@@ -16,7 +16,6 @@ from config import (
     FOREX_PAIRS,
     METALS,
     INDICES,
-    ENERGIES,
     CRYPTO_ASSETS,
     SIGNAL_MODE,
     STEP1_PROFIT_TARGET_PCT,
@@ -30,7 +29,6 @@ from strategy import (
     scan_crypto,
     scan_metals,
     scan_indices,
-    scan_energies,
     scan_all_markets,
     ScanResult,
 )
@@ -550,19 +548,17 @@ async def crypto(interaction: discord.Interaction):
         await interaction.followup.send(f"Error scanning crypto: {str(e)}")
 
 
-@bot.tree.command(name="com", description="Scan commodities (metals + energies).")
+@bot.tree.command(name="com", description="Scan commodities (metals).")
 async def com(interaction: discord.Interaction):
     await interaction.response.defer()
     try:
         scan_results_m, _ = await asyncio.to_thread(scan_metals)
-        scan_results_e, _ = await asyncio.to_thread(scan_energies)
-        combined = scan_results_m + scan_results_e
 
-        if not combined:
+        if not scan_results_m:
             await interaction.followup.send("**Commodities** - No setups found.")
             return
 
-        msg = format_scan_group("Commodities", combined)
+        msg = format_scan_group("Commodities", scan_results_m)
         chunks = split_message(msg, limit=1900)
 
         for chunk in chunks:
@@ -655,7 +651,6 @@ async def live(interaction: discord.Interaction):
             "Forex": FOREX_PAIRS,
             "Metals": METALS,
             "Indices": INDICES,
-            "Energies": ENERGIES,
             "Crypto": CRYPTO_ASSETS,
         }
 
@@ -762,7 +757,7 @@ async def backtest_cmd(interaction: discord.Interaction, period: str, asset: str
             return
         
         # Multi-asset backtest (when no specific asset provided)
-        all_assets = FOREX_PAIRS + METALS + INDICES + ENERGIES + CRYPTO_ASSETS
+        all_assets = FOREX_PAIRS + METALS + INDICES + CRYPTO_ASSETS
         
         all_results = []
         total_trades_all = 0

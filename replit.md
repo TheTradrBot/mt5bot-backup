@@ -1,13 +1,48 @@
-# Blueprint Trader AI - 5%ers MT5 Trading Bot
+# Blueprint Trader AI - FTMO MT5 Trading Bot
 
 ## Overview
-Blueprint Trader AI is an automated trading bot for the 5%ers High Stakes 10K Challenge. It runs 24/7 on a Windows VM with MetaTrader 5, using the same proven strategy from backtests for live trading. Discord is used ONLY for monitoring commands - all trading happens independently on the VM.
+Blueprint Trader AI is an automated trading bot for FTMO Challenge accounts. It runs 24/7 on a Windows VM with MetaTrader 5, using the same proven strategy from backtests for live trading. Discord is used ONLY for monitoring commands - all trading happens independently on the VM.
 
 ## User Preferences
 - Preferred communication style: Simple, everyday language
 - Strategy must use EXACT SAME logic as backtests
 - Bot must trade independently (no Discord dependency for trades)
-- Pre-trade risk checks to prevent 5%ers rule violations
+- Pre-trade risk checks to prevent FTMO rule violations
+- Using FTMO demo account for trading
+- Using OANDA API for data fetching
+
+## Tradable Assets (34 Total)
+
+### Forex Pairs (28)
+**Majors:** EURUSD, GBPUSD, USDJPY, USDCHF, USDCAD, AUDUSD, NZDUSD
+**EUR Crosses:** EURGBP, EURJPY, EURCHF, EURAUD, EURCAD, EURNZD
+**GBP Crosses:** GBPJPY, GBPCHF, GBPAUD, GBPCAD, GBPNZD
+**AUD Crosses:** AUDJPY, AUDCHF, AUDCAD, AUDNZD
+**NZD Crosses:** NZDJPY, NZDCHF, NZDCAD
+**Other Crosses:** CADJPY, CADCHF, CHFJPY
+
+### Metals (2)
+- XAUUSD (Gold)
+- XAGUSD (Silver)
+
+### Crypto (2)
+- BTCUSD (Bitcoin)
+- ETHUSD (Ethereum)
+
+### Indices (2)
+- US500 (S&P 500) - OANDA: SPX500_USD
+- US100 (Nasdaq 100) - OANDA: NAS100_USD
+
+## Symbol Naming
+
+| Data Source (OANDA) | Trading (FTMO MT5) |
+|---------------------|-------------------|
+| EUR_USD | EURUSD |
+| XAU_USD | XAUUSD |
+| SPX500_USD | US500 |
+| NAS100_USD | US100 |
+
+See `symbol_mapping.py` for complete mapping between OANDA and FTMO formats.
 
 ## Architecture
 
@@ -32,8 +67,9 @@ Blueprint Trader AI is an automated trading bot for the 5%ers High Stakes 10K Ch
 ├── main_live_bot.py      # Standalone 24/7 trading bot (Windows VM)
 ├── discord_minimal.py    # Minimal Discord monitoring bot
 ├── strategy_core.py      # CORE STRATEGY - Single source of truth
+├── symbol_mapping.py     # OANDA <-> FTMO symbol mapping
 ├── backtest.py           # Backtest engine using strategy_core
-├── challenge_rules.py    # 5%ers rules and tracking
+├── challenge_rules.py    # FTMO rules and tracking
 ├── config.py             # Configuration settings
 ├── data.py               # OANDA data source
 ├── tradr/                # Modular package
@@ -60,24 +96,24 @@ The strategy evaluates setups across these pillars:
 7. **R:R** - Valid entry/SL/TP levels with min 1:1
 
 **Signal Status:**
-- `ACTIVE`: Confluence >= 2, quality >= 1, has R:R = Take trade
+- `ACTIVE`: Confluence >= 4, quality >= 1, has R:R = Take trade
 - `WATCHING`: Close to confluence threshold = Monitor
 - `SCAN`: Below threshold = No action
 
-## 5%ers Challenge Rules
+## FTMO Challenge Rules
 
-### Phase 1 (Step 1)
-- Profit Target: **8%** ($800 on $10K)
+### Challenge Phase (Step 1)
+- Profit Target: **10%** ($1,000 on $10K)
 - Max Daily Loss: **5%** ($500)
 - Max Total Drawdown: **10%** ($1,000)
-- Min Profitable Days: **3** (0.5%+ each)
+- Min Trading Days: **None** (no minimum)
 
-### Phase 2 (Step 2)
+### Verification Phase (Step 2)
 - Profit Target: **5%** ($500 on $10K)
-- Same DD rules as Phase 1
+- Same DD rules as Challenge Phase
 
 ### Risk Management
-- Risk per trade: **0.75%** of account
+- Risk per trade: **1%** of account
 - Lot reduction: Halved for each open position
 - Pre-trade DD simulation: Blocks trades that would breach limits
 
@@ -85,9 +121,15 @@ The strategy evaluates setups across these pillars:
 
 ### Required for Live Trading
 ```
-MT5_SERVER=YourBrokerServer
+MT5_SERVER=FTMO-Demo
 MT5_LOGIN=12345678
 MT5_PASSWORD=YourPassword
+```
+
+### Required for Data
+```
+OANDA_API_KEY=xxx
+OANDA_ACCOUNT_ID=xxx
 ```
 
 ### Optional
@@ -95,8 +137,6 @@ MT5_PASSWORD=YourPassword
 DISCORD_BOT_TOKEN=your_token    # For Discord monitoring
 SCAN_INTERVAL_HOURS=4            # How often to scan (default: 4)
 SIGNAL_MODE=standard             # "standard" or "aggressive"
-OANDA_API_KEY=xxx                # For OANDA data
-OANDA_ACCOUNT_ID=xxx             # For OANDA data
 ```
 
 ## Windows VM Deployment
@@ -135,6 +175,9 @@ Start-ScheduledTask -TaskName TradrLive
 ## Recent Changes
 
 ### December 2024
+- Updated for FTMO Challenge rules (10% target Phase 1, 5% Phase 2)
+- Added symbol mapping for OANDA -> FTMO MT5 conversion
+- Expanded to 34 tradable symbols (28 forex, 2 metals, 2 crypto, 2 indices)
 - Created modular `/tradr/` package structure
 - Built standalone `main_live_bot.py` using SAME strategy as backtests
 - Implemented pre-trade DD simulation in `tradr/risk/manager.py`
@@ -153,6 +196,16 @@ from strategy_core import (
     _infer_trend,
     _pick_direction_from_bias,
 )
+```
+
+### Symbol Conversion
+When fetching data from OANDA but trading on FTMO:
+```python
+from symbol_mapping import oanda_to_ftmo, ftmo_to_oanda
+
+# Get OANDA data, convert to FTMO symbol for trading
+oanda_symbol = "EUR_USD"
+ftmo_symbol = oanda_to_ftmo(oanda_symbol)  # "EURUSD"
 ```
 
 ### Risk Manager
@@ -177,4 +230,6 @@ python scripts/compare.py backtest_trades.json mt5_history.csv
 - numpy
 - requests
 - python-dotenv
+- flask
+- flask-cors
 - MetaTrader5 (Windows VM only)

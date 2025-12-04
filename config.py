@@ -29,7 +29,7 @@ except Exception as e:
 from challenge_rules import FIVERS_10K_RULES
 
 
-# ==== 5%ers High Stakes 10K Risk Model ====
+# ==== FTMO Challenge Risk Model ====
 # All challenge rules are centralized in challenge_rules.py
 # These values are exported for backward compatibility
 
@@ -37,32 +37,51 @@ ACCOUNT_CURRENCY = FIVERS_10K_RULES.account_currency
 ACCOUNT_SIZE = FIVERS_10K_RULES.account_size  # 10,000 USD
 MAX_DAILY_LOSS_PCT = FIVERS_10K_RULES.max_daily_loss_pct / 100  # 0.05 (5%)
 MAX_TOTAL_LOSS_PCT = FIVERS_10K_RULES.max_total_drawdown_pct / 100  # 0.10 (10%)
-RISK_PER_TRADE_PCT = FIVERS_10K_RULES.risk_per_trade_pct / 100  # 0.0075 (0.75%)
+RISK_PER_TRADE_PCT = FIVERS_10K_RULES.risk_per_trade_pct / 100  # 0.01 (1%)
 MAX_OPEN_RISK_PCT = FIVERS_10K_RULES.max_open_risk_pct / 100  # 0.03 (3%)
 MIN_WITHDRAWAL_USD = 150
 
-# Challenge-specific constants
-STEP1_PROFIT_TARGET_PCT = FIVERS_10K_RULES.step1_profit_target_pct  # 8%
-STEP2_PROFIT_TARGET_PCT = FIVERS_10K_RULES.step2_profit_target_pct  # 5%
-MIN_PROFITABLE_DAYS = FIVERS_10K_RULES.min_profitable_days  # 3 days
-PROFITABLE_DAY_THRESHOLD_PCT = FIVERS_10K_RULES.profitable_day_threshold_pct  # 0.5%
+# Challenge-specific constants (FTMO)
+STEP1_PROFIT_TARGET_PCT = FIVERS_10K_RULES.step1_profit_target_pct  # 10% (FTMO Challenge)
+STEP2_PROFIT_TARGET_PCT = FIVERS_10K_RULES.step2_profit_target_pct  # 5% (Verification)
+MIN_PROFITABLE_DAYS = FIVERS_10K_RULES.min_profitable_days  # 0 (no minimum for FTMO)
+PROFITABLE_DAY_THRESHOLD_PCT = FIVERS_10K_RULES.profitable_day_threshold_pct  # 0 (N/A for FTMO)
 
 CONTRACT_SPECS = {
-    "USD_JPY": {"pip_value": 0.01, "contract_size": 100000, "pip_location": 2},
-    "GBP_USD": {"pip_value": 0.0001, "contract_size": 100000, "pip_location": 4},
     "EUR_USD": {"pip_value": 0.0001, "contract_size": 100000, "pip_location": 4},
-    "NZD_USD": {"pip_value": 0.0001, "contract_size": 100000, "pip_location": 4},
-    "AUD_USD": {"pip_value": 0.0001, "contract_size": 100000, "pip_location": 4},
+    "GBP_USD": {"pip_value": 0.0001, "contract_size": 100000, "pip_location": 4},
+    "USD_JPY": {"pip_value": 0.01, "contract_size": 100000, "pip_location": 2},
     "USD_CHF": {"pip_value": 0.0001, "contract_size": 100000, "pip_location": 4},
     "USD_CAD": {"pip_value": 0.0001, "contract_size": 100000, "pip_location": 4},
+    "AUD_USD": {"pip_value": 0.0001, "contract_size": 100000, "pip_location": 4},
+    "NZD_USD": {"pip_value": 0.0001, "contract_size": 100000, "pip_location": 4},
+    "EUR_GBP": {"pip_value": 0.0001, "contract_size": 100000, "pip_location": 4},
+    "EUR_JPY": {"pip_value": 0.01, "contract_size": 100000, "pip_location": 2},
+    "EUR_CHF": {"pip_value": 0.0001, "contract_size": 100000, "pip_location": 4},
+    "EUR_AUD": {"pip_value": 0.0001, "contract_size": 100000, "pip_location": 4},
+    "EUR_CAD": {"pip_value": 0.0001, "contract_size": 100000, "pip_location": 4},
+    "EUR_NZD": {"pip_value": 0.0001, "contract_size": 100000, "pip_location": 4},
+    "GBP_JPY": {"pip_value": 0.01, "contract_size": 100000, "pip_location": 2},
+    "GBP_CHF": {"pip_value": 0.0001, "contract_size": 100000, "pip_location": 4},
+    "GBP_AUD": {"pip_value": 0.0001, "contract_size": 100000, "pip_location": 4},
+    "GBP_CAD": {"pip_value": 0.0001, "contract_size": 100000, "pip_location": 4},
+    "GBP_NZD": {"pip_value": 0.0001, "contract_size": 100000, "pip_location": 4},
+    "AUD_JPY": {"pip_value": 0.01, "contract_size": 100000, "pip_location": 2},
+    "AUD_CHF": {"pip_value": 0.0001, "contract_size": 100000, "pip_location": 4},
+    "AUD_CAD": {"pip_value": 0.0001, "contract_size": 100000, "pip_location": 4},
+    "AUD_NZD": {"pip_value": 0.0001, "contract_size": 100000, "pip_location": 4},
+    "NZD_JPY": {"pip_value": 0.01, "contract_size": 100000, "pip_location": 2},
+    "NZD_CHF": {"pip_value": 0.0001, "contract_size": 100000, "pip_location": 4},
+    "NZD_CAD": {"pip_value": 0.0001, "contract_size": 100000, "pip_location": 4},
+    "CAD_JPY": {"pip_value": 0.01, "contract_size": 100000, "pip_location": 2},
+    "CAD_CHF": {"pip_value": 0.0001, "contract_size": 100000, "pip_location": 4},
+    "CHF_JPY": {"pip_value": 0.01, "contract_size": 100000, "pip_location": 2},
     "XAU_USD": {"pip_value": 0.01, "contract_size": 100, "pip_location": 2},
     "XAG_USD": {"pip_value": 0.001, "contract_size": 5000, "pip_location": 3},
-    "NAS100_USD": {"pip_value": 1.0, "contract_size": 1, "pip_location": 0},
-    "SPX500_USD": {"pip_value": 1.0, "contract_size": 1, "pip_location": 0},
-    "WTICO_USD": {"pip_value": 0.01, "contract_size": 1000, "pip_location": 2},
-    "BCO_USD": {"pip_value": 0.01, "contract_size": 1000, "pip_location": 2},
     "BTC_USD": {"pip_value": 1.0, "contract_size": 1, "pip_location": 0},
     "ETH_USD": {"pip_value": 0.01, "contract_size": 1, "pip_location": 2},
+    "SPX500_USD": {"pip_value": 1.0, "contract_size": 1, "pip_location": 0},
+    "NAS100_USD": {"pip_value": 1.0, "contract_size": 1, "pip_location": 0},
 }
 
 
@@ -143,45 +162,28 @@ FOREX_PAIRS = [
     "CAD_JPY", "CAD_CHF", "CHF_JPY",
 ]
 
-# Metals
+# Metals (FTMO tradable)
 METALS = [
-    "XAU_USD",  # Gold
-    "XAG_USD",  # Silver
-    "XPT_USD",  # Platinum
-    "XPD_USD",  # Palladium
-    "XAU_EUR",  # Gold/Euro
-    "XAU_GBP",  # Gold/GBP
-    "XAU_AUD",  # Gold/AUD
-    "XAG_EUR",  # Silver/Euro
-    "XCU_USD",  # Copper
+    "XAU_USD",  # Gold (XAUUSD on FTMO)
+    "XAG_USD",  # Silver (XAGUSD on FTMO)
 ]
 
-# Indices
+# Indices (FTMO tradable)
 INDICES = [
-    "US30_USD",    # Dow Jones
-    "SPX500_USD",  # S&P 500
-    "NAS100_USD",  # Nasdaq 100
+    "SPX500_USD",  # S&P 500 (US500 on FTMO)
+    "NAS100_USD",  # Nasdaq 100 (US100 on FTMO)
 ]
 
-# Energies
-ENERGIES = [
-    "WTICO_USD",   # WTI Crude Oil
-    "BCO_USD",     # Brent Crude Oil
-    "NATGAS_USD",  # Natural Gas
-]
-
-# Crypto
+# Crypto (FTMO tradable)
 CRYPTO_ASSETS = [
-    "BTC_USD",   # Bitcoin
-    "ETH_USD",   # Ethereum
-    "LTC_USD",   # Litecoin
-    "BCH_USD",   # Bitcoin Cash
+    "BTC_USD",   # Bitcoin (BTCUSD on FTMO)
+    "ETH_USD",   # Ethereum (ETHUSD on FTMO)
 ]
 
 # Convenience groups
 
 def all_market_instruments() -> list[str]:
-    """All instruments Blueprint can scan."""
+    """All instruments Blueprint can scan (OANDA format)."""
     return sorted(set(
-        FOREX_PAIRS + METALS + INDICES + ENERGIES + CRYPTO_ASSETS
+        FOREX_PAIRS + METALS + INDICES + CRYPTO_ASSETS
     ))
