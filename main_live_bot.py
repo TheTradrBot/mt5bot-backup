@@ -125,6 +125,7 @@ class LiveTradingBot:
         self.scan_count = 0
         self.pending_setups: Dict[str, PendingSetup] = {}
         self._load_pending_setups()
+        self._auto_start_challenge()
     
     def _load_pending_setups(self):
         """Load pending setups from file."""
@@ -147,6 +148,16 @@ class LiveTradingBot:
                 json.dump(data, f, indent=2, default=str)
         except Exception as e:
             log.error(f"Error saving pending setups: {e}")
+    
+    def _auto_start_challenge(self):
+        """Auto-start challenge if not already active."""
+        if not self.risk_manager.state.live_flag:
+            log.info("Challenge not active - auto-starting Phase 1...")
+            self.risk_manager.start_challenge(phase=1)
+            log.info("Challenge auto-started! Trading is now enabled.")
+        else:
+            phase = self.risk_manager.state.phase
+            log.info(f"Challenge already active (Phase {phase}) - continuing...")
     
     def connect(self) -> bool:
         """Connect to MT5."""
