@@ -621,6 +621,8 @@ class LiveTradingBot:
         - 4.5% daily loss triggers emergency close (before 5% limit)
         - 9% total drawdown triggers emergency close (before 10% limit)
         
+        Also checks individual position risk and closes high-risk positions first.
+        
         Returns:
             True if emergency close was triggered, False otherwise
         """
@@ -630,8 +632,28 @@ class LiveTradingBot:
             return False
         
         current_equity = account.get('equity', 0)
+        current_balance = account.get('balance', 0)
+        
         if current_equity <= 0:
             return False
+        
+        # Check individual position risk first
+        positions = self.mt5.get_my_positions()
+        for pos in positions:
+            potential_loss = abs(pos.price_open - pos.sl) * pos.volume * 10  # Rough estimate
+            risk_pct = (potential_loss / current_balance) * 100 if current_balance > 0 else 0
+            
+            # Close positions risking more than 3% individually
+            if risk_pct > 3.0:
+                log.warning(f"[{pos.symbol}] Position risks {risk_pct:.1f}% (${potential_loss:.0f}) - CLOSING to prevent breach")
+                result = self.mt5.close_position(pos.ticket)
+                if result.success:
+                    log.info(f"[{pos.symbol}] High-risk position closed at {result.price}")
+                    self.risk_manager.record_trade_close(
+                        order_id=pos.ticket,
+                        exit_price=result.price,
+                        pnl_usd=pos.profit,
+                    )
         
         should_close, reason = self.risk_manager.should_emergency_close(current_equity)
         
@@ -723,7 +745,9 @@ class LiveTradingBot:
             
             if tp1_hit and partial_state == 0:
                 close_volume = round(original_volume * 0.33, 2)
-                if close_volume >= 0.01 and close_volume <= current_volume:
+                close_volume = max(0.01, close_volume)  # Ensure minimum lot size
+                
+                if close_volume <= current_volume:
                     log.info(f"[{symbol}] TP1 HIT! Closing 33% ({close_volume} lots) of position")
                     result = self.mt5.partial_close(pos.ticket, close_volume)
                     if result.success:
@@ -731,9 +755,9 @@ class LiveTradingBot:
                         setup.partial_closes = 1
                         self._save_pending_setups()
                         
-                        if tp2:
-                            self.mt5.modify_sl_tp(pos.ticket, tp=tp2)
-                            log.info(f"[{symbol}] TP updated to TP2: {tp2}")
+                        # Move SL to breakeven after TP1
+                        self.mt5.modify_sl_tp(pos.ticket, sl=setup.entry_price, tp=tp2 if tp2 else tp1)
+                        log.info(f"[{symbol}] SL moved to breakeven ({setup.entry_price}), TP updated to TP2: {tp2 if tp2 else 'N/A'}")
                     else:
                         log.error(f"[{symbol}] Partial close failed: {result.error}")
             
@@ -857,7 +881,7 @@ class LiveTradingBot:
         log.info(f"Login: {MT5_LOGIN}")
         log.info(f"Scan Interval: {SCAN_INTERVAL_HOURS} hours")
         log.info(f"Validate Interval: {self.VALIDATE_INTERVAL_MINUTES} minutes")
-        log.info(f"P/L Monitor Interval: 30 seconds")
+        log.info(f"P/L Monitor Interval: 10 seconds (live protection)")
         log.info(f"Strategy Mode: {SIGNAL_MODE}")
         log.info(f"Min Confluence: {MIN_CONFLUENCE}/7")
         log.info(f"Symbols: {len(TRADABLE_SYMBOLS)}")
@@ -883,7 +907,7 @@ class LiveTradingBot:
                 
                 if not emergency_triggered:
                     time_since_pnl_check = (now - last_pnl_check).total_seconds()
-                    if time_since_pnl_check >= 30:
+                    if time_since_pnl_check >= 10:  # Check every 10 seconds for faster response
                         if self.monitor_live_pnl():
                             emergency_triggered = True
                             log.error("Emergency close triggered - halting all trading")
