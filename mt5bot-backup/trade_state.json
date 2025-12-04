@@ -1,0 +1,55 @@
+{
+  "trades": {
+    "GBP_NZD_bullish": {
+      "symbol": "GBP_NZD",
+      "direction": "bullish",
+      "entry": 2.30368,
+      "stop_loss": 2.2729981513335953,
+      "tp1": 2.326361109199843,
+      "tp2": 2.3430370335330455,
+      "tp3": 2.3663833275995287,
+      "confluence_score": 6
+    },
+    "XPD_USD_bullish": {
+      "symbol": "XPD_USD",
+      "direction": "bullish",
+      "entry": 1471.4465,
+      "stop_loss": 1306.4783022009929,
+      "tp1": 1564.659185079404,
+      "tp2": 1645.3407109789077,
+      "tp3": 1758.2948472382127,
+      "confluence_score": 5
+    }
+  },
+  "progress": {
+    "GBP_NZD_bullish": {
+      "tp1": false,
+      "tp2": false,
+      "tp3": false,
+      "tp4": false,
+      "tp5": false,
+      "sl": false
+    },
+    "XPD_USD_bullish": {
+      "tp1": false,
+      "tp2": false,
+      "tp3": false,
+      "tp4": false,
+      "tp5": false,
+      "sl": false
+    }
+  },
+  "sizing": {
+    "GBP_NZD_bullish": {
+      "lot_size": 0.02,
+      "risk_usd": 61.36,
+      "risk_pct": 0.0061,
+      "pip_risk": 0.2,
+      "stop_pips": 306.8
+    }
+  },
+  "entry_dates": {
+    "GBP_NZD_bullish": "2025-12-02T18:46:27.373770",
+    "XPD_USD_bullish": "2025-12-02T18:46:27.580750"
+  }
+}

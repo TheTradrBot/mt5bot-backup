@@ -1,0 +1,176 @@
+Here’s a clean, copy-pasteable Replit/Bolt prompt you can use:
+
+---
+
+You are working on an existing trading bot project that trades based on a specific strategy and is integrated with Discord commands.
+Your job is to **implement and align the challenge logic, backtest logic, and live trading logic** with the **The 5%ers High Stakes 10K challenge** rules.
+
+### Core Challenge Logic
+
+1. **Account size and structure**
+
+   * Use a **10,000 USD account** as the base for everything:
+
+     * `/backtest`
+     * `/challenge`
+     * live trading / forward testing.
+   * **Step 1**: account starts at 10K and must reach **+5% profit**.
+   * After **Step 1 is passed**, **Step 2 starts again from a fresh 10K base** and must also reach **+5% profit**.
+   * One **full “challenge”** = Step 1 + Step 2 both passed.
+
+2. **Profitable day requirement**
+
+   * For **each step**, the bot needs at least **3 profitable trading days** (calendar days with net positive PnL) to count that step as **validly passed**, even if the profit target is reached earlier.
+   * A step is only “passed” if:
+
+     * The account has reached +5% from the step’s starting equity, **and**
+     * There are **≥ 3 profitable days** in that step (no matter how many losing days, as long as rules are respected).
+
+3. **Re-start logic**
+
+   * When Step 1 is completed:
+
+     * Log it as “Step 1 Passed”.
+     * Start **Step 2** with:
+
+       * New starting equity: 10,000
+       * Same rules and limits as the High Stakes 10K Step 2.
+   * When Step 2 is completed:
+
+     * Log it as “Step 2 Passed”.
+     * Mark this as **“1 full challenge passed”** (Step 1 + Step 2).
+   * The code should also be able to answer:
+
+     > “Why is Step 2 harder to hit than Step 1, even though the profit target is the same?”
+     > by:
+
+     * Comparing trade statistics, drawdowns, and rule constraints between the two steps.
+     * Explaining the differences in risk conditions, rules, or market behavior that make Step 2 more difficult.
+
+### 5%ers High Stakes 10K Rules (Research & Compliance)
+
+* **Do your own research** in the code (using web requests if allowed) to:
+
+  * Fetch the **latest rules** for **The 5%ers High Stakes 10K challenge**.
+  * Extract:
+
+    * Profit targets
+    * Maximum daily drawdown
+    * Maximum overall drawdown
+    * Minimum trading days / profitable days
+    * Leverage limits, position size limits, news-trading restrictions, weekend rules, etc.
+* **Hard-code these rules clearly** in one place (e.g. a config/rules object), so they are:
+
+  * Used in `/backtest`
+  * Used in `/challenge`
+  * Used in live trade risk management.
+* For **every backtest, challenge simulation, and live trade**, ensure:
+
+  * The strategy **never breaches any of these rules**.
+  * If a rule would have been breached, mark that simulation/run/challenge as **failed** and report why (which rule was broken, when, on which trade).
+
+### Discord Commands
+
+#### 1. `/challenge` command
+
+* Format:
+  ` /challenge start_month start_year end_month end_year`
+  Example:
+  ` /challenge Jan 2024 Jul 2024`
+* Behavior:
+
+  * Run a full simulation over that period using:
+
+    * 10K base account
+    * High Stakes 10K rules
+    * The **exact same strategy, risk management, and trade management** that the live bot will use.
+  * Split the period into **consecutive challenges**:
+
+    * Each challenge = Step 1 + Step 2.
+    * Step 1: start at 10K, hit +5% with rules + 3 profitable days.
+    * Step 2: immediately restart at 10K, hit +5% with rules + 3 profitable days.
+  * Count **how many full challenges** were passed in that period.
+  * In the Discord output, show:
+
+    * Number of **Step 1 passes**, **Step 2 passes**, and **full challenges passed** (where Step 1 and Step 2 are both passed).
+    * For each completed challenge:
+
+      * Start date and end date of Step 1 and Step 2.
+      * Number of profitable days per step.
+    * **Total net result over the entire requested period**:
+
+      * Final equity
+      * Total profit in currency (e.g. +2,340 USD)
+      * Total profit in % relative to 10K base (e.g. +23.4%).
+    * Clear indication if at any point a simulation would have **violated a rule** (e.g. max daily DD breached, max overall DD breached, etc.), and mark affected challenges as **failed**.
+
+#### 2. `/backtest` command
+
+* The `/backtest` command must:
+
+  * Use a **10K starting balance**.
+  * Apply **the exact same High Stakes 10K rules** and checks.
+  * Use **the exact same strategy logic and risk/trade management** that will be used for:
+
+    * `/challenge`
+    * Live trading.
+* Output for `/backtest` should include:
+
+  * Start and end date of test.
+  * Number of trades.
+  * Win-rate.
+  * Maximum daily drawdown and maximum total drawdown (so we can see if we were close to breaching rules).
+  * Final balance and total profit %.
+  * Whether this backtest would have passed a **Step 1**, **Step 2**, or a **full challenge**, given the rules and profitable day requirements.
+
+### Alignment Between Backtest, Challenge, and Live Trading
+
+It is **critical** that:
+
+* The **logic used to generate trades** in `/backtest` and `/challenge` is **identical** to the logic used in **live trading**:
+
+  * Same entry conditions, exits, TP/SL, partials, filters, etc.
+  * Same lot sizing and risk per trade.
+* The **risk management and trade management rules** are shared:
+
+  * Same max risk per trade (e.g. % of equity).
+  * Same handling of SL, TP, breakeven, trailing stops, etc.
+  * Same account-level risk caps tied to 5%ers rules.
+* That means:
+
+  * If the strategy takes a trade in live mode, a backtest over that period should show the **same trade** (within limits of data resolution and slippage assumptions).
+  * `/challenge` is essentially a wrapper around the **same backtest engine**, with additional logic to:
+
+    * Group trades into Step 1 / Step 2.
+    * Enforce 5%ers challenge rules.
+    * Count profitable days and passed challenges.
+
+### Analysis: Why Step 2 Is Harder Than Step 1
+
+Implement a function or report that can be called from within `/challenge` to answer:
+
+> “Why was Step 2 harder to hit, if Step 1 was easier even with the same 5% target?”
+
+This should:
+
+* Compare stats between Step 1 and Step 2:
+
+  * Number of trades
+  * Win-rate
+  * Average R/R
+  * Volatility of equity curve
+  * Rule violations or near-violations
+* Explain possible reasons, for example:
+
+  * Tighter effective risk constraints or smaller allowed drawdown in Step 2.
+  * Different market conditions during Step 2 periods.
+  * Strategy behaviour (e.g. more conservative lot sizing after drawdowns, fewer opportunities, etc.).
+* Print a **human-readable explanation** in Discord when requested (e.g. part of the `/challenge` result or via a subcommand).
+
+---
+
+Use clear, well-structured code and comments so that someone reading the repository later can easily understand:
+
+* The High Stakes 10K rules you implemented.
+* How a challenge is defined (Step 1 + Step 2).
+* How `/challenge`, `/backtest`, and live trading all share the same core strategy and risk logic.

@@ -1,0 +1,144 @@
+You are my Replit assistant. I want to run a small live/demo check to confirm whether my trading bot, when connected to a 5ers MT5 account, produces the same trades as my historical backtest using the same strategy and parameters. Do not start until I provide the MT5 demo credentials and the exact strategy name + parameters. Follow these steps exactly and produce logs and a comparison report.
+
+Connect to MT5:
+
+Use MT5 Python API (MetaTrader5) and connect to the provided MT5 demo server credentials (account, password, server).
+
+Verify connection (account info, server time, symbol list).
+
+Map symbol names: confirm the exact symbol string used by the broker (e.g. EURUSD vs EURUSD.a) and record tick/quote precision.
+
+Environment sync:
+
+Confirm platform timezone/UTC offset and note server time.
+
+Query and record current spread, commission, swap, and minimum lot size for each test symbol.
+
+Strategy load:
+
+Load the specified strategy code / EA or call the exact entry/exit logic from the repo.
+
+Ensure indicators/settings match the backtest version (same indicator code, period, smoothing, source price). If any indicator code differs, log the difference and stop.
+
+Micro test plan:
+
+Run the strategy in demo/live (not paper) on a single symbol for a small, time-boxed test. Two options — pick one:
+A) Run until N trades execute (e.g., N = 5) OR
+B) Run for T minutes/hours (e.g., T = 120 minutes).
+
+Use the same lot sizing / position sizing rules as the backtest.
+
+When placing orders, log every event with: timestamp (server UTC), symbol, order type, requested price, executed price, executed volume, spread at execution, slippage (executed - requested), order fill time (ms), order id, reason (open / modify / close), account balance & margin after trade.
+
+Data logging & storage:
+
+Save all logs (CSV and JSON) to /mnt/data/replit_test_logs with filenames containing timestamp.
+
+Also snapshot a chart image around each entry/exit using the broker tick data (if available) or the last 1000 bars from MT5 for the symbol/timeframe and save to /mnt/data/plots.
+
+Backtest comparison:
+
+Load backtest trades (user will provide backtest CSV or the assistant will generate from local repo backtest results). Backtest log must include: timestamp, entry price, exit price, order type, size, and strategy parameters.
+
+Normalize timestamps to UTC and symbol names to broker's naming convention.
+
+For each live trade match with the corresponding backtest trade by trade index or by nearest timestamp within a tolerance (e.g., 5 min). Compare:
+• Entry price difference (pips)
+• Exit price difference (pips)
+• Spread difference at entry & exit
+• Slippage recorded
+• Execution delay (ms)
+• Result differences (PnL in account currency and R)
+
+Produce a summary: exact-match count, near-match count, mismatches (and reasons).
+
+Report:
+
+Produce a human-readable report (Markdown) containing:
+• Test parameters and environment (server, spread, timezone)
+• Complete CSV of live trades and backtest trades used
+• Comparison table of the N most important trades (showing differences)
+• Root causes for differences (if detectable): spread, slippage, different tick data, broker execution model, order type mismatch, GMT offset, symbol suffix/prefix, partial fills, stops being triggered by intrabar ticks, or trade sizing rounding.
+• Recommendation list to reduce differences (e.g., use tick-by-tick backtest data from the broker, set limit instead of market orders, widen stop margins, use same spread profile in backtest).
+
+Pass/fail criteria:
+
+Suggest pass/fail thresholds (editable):
+• Pass if ≥ 80% of trades have entry price difference ≤ X pips and result difference ≤ Y% (default X = 1.0 pip, Y = 5%).
+• Otherwise fail and list prioritized fixes.
+
+Safety & cleanup:
+
+Use a demo account by default. If user supplies a funded live account, require explicit confirmation to trade real money.
+
+After the test, close any opened positions unless user instructs otherwise, and produce a final account snapshot.
+
+Deliverables (files + console):
+
+/mnt/data/replit_test_logs/test_<timestamp>_live_trades.csv
+
+/mnt/data/replit_test_logs/test_<timestamp>_backtest_trades.csv
+
+/mnt/data/replit_test_logs/comparison_report_<timestamp>.md
+
+PNG snapshots of charts for entries/exits.
+
+Console summary with top 5 differences.
+
+When you are ready, ask me for the following inputs (in a single turn): MT5 server name, account number, password, symbol(s) to test, strategy identifier (file path in repo), exact strategy parameters, test mode (N trades or T minutes), and backtest CSV or backtest file path. Then perform the test and return the files and a markdown report.
+
+Quick test checklist (for you or the assistant)
+
+ MT5 demo credentials ready
+
+ Backtest CSV / backtest strategy run saved
+
+ Strategy version and indicators identical to backtest
+
+ Pick N trades (e.g., 5) or T minutes (e.g., 120)
+
+ Verify symbol mapping & spread
+
+ Run test and save logs
+
+ Compare and produce report
+
+Short comparison pseudocode (for the assistant to implement)
+# load live and backtest CSVs as pandas
+live = pd.read_csv("live_trades.csv", parse_dates=["timestamp"])
+back = pd.read_csv("backtest_trades.csv", parse_dates=["timestamp"])
+
+# normalize symbols & timezone
+live['timestamp'] = live['timestamp'].dt.tz_convert('UTC')
+back['timestamp'] = back['timestamp'].dt.tz_convert('UTC')
+
+# match by index or nearest timestamp
+matches = []
+for i, b in back.iterrows():
+    # find nearest live by timestamp within tolerance
+    candidate = live.iloc[(live['timestamp'] - b['timestamp']).abs().argsort()[:1]]
+    diff_pips = abs(candidate['entry_price'].values[0] - b['entry_price']) * 10000
+    matches.append({
+       'back_id': b['id'],
+       'live_id': candidate['order_id'].values[0],
+       'entry_diff_pips': diff_pips,
+       'exit_diff_pips': abs(candidate['exit_price'].values[0] - b['exit_price']) * 10000,
+       ...
+    })
+pd.DataFrame(matches).to_csv("comparison.csv", index=False)
+
+What to watch for (likely causes of differences)
+
+tick vs bar data: backtest using bar-open may differ from tick execution in live.
+
+spreads (wider in live), commissions, swap fees.
+
+slippage & partial fills.
+
+broker execution model (instant vs market vs ECN).
+
+symbol naming and rounding (min lot, lot step).
+
+server time / GMT differences causing different bar alignment.
+
+indicator rounding or difference in built-in indicator versions.
