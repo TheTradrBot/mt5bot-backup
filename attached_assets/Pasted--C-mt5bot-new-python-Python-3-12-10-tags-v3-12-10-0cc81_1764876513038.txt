@@ -1,0 +1,220 @@
+
+C:\mt5bot-new>python
+Python 3.12.10 (tags/v3.12.10:0cc8128, Apr  8 2025, 12:21:36) [MSC v.1943 64 bit (AMD64)] on win32
+Type "help", "copyright", "credits" or "license" for more information.
+>>> import MetaTrader5 as mt5
+>>>
+>>> MT5_SERVER = "FTMO-Demo"
+>>> MT5_LOGIN = 1512190437
+>>> MT5_PASSWORD = "Picorico1969?"
+>>>
+>>> # Initialize MT5
+>>> if not mt5.initialize():
+...     print(f"Initialization failed: {mt5.last_error()}")
+... else:
+...     authorized = mt5.login(MT5_LOGIN, password=MT5_PASSWORD, server=MT5_SERVER)
+...     if authorized:
+...         print("Connected to MT5 successfully.")
+...         mt5.shutdown()
+...     else:
+...         print(f"Login failed: {mt5.last_error()}")
+...         mt5.shutdown()C:\mt5bot-new>python
+  File "<stdin>", line 10
+    mt5.shutdown()C:\mt5bot-new>python
+                  ^
+SyntaxError: invalid syntax
+>>> Python 3.12.10 (tags/v3.12.10:0cc8128, Apr  8 2025, 12:21:36) [MSC v.1943 64 bit (AMD64)] on win32
+  File "<stdin>", line 1
+    Python 3.12.10 (tags/v3.12.10:0cc8128, Apr  8 2025, 12:21:36) [MSC v.1943 64 bit (AMD64)] on win32
+           ^^^^
+SyntaxError: invalid syntax
+>>> Type "help", "copyright", "credits" or "license" for more information.
+  File "<stdin>", line 1
+    Type "help", "copyright", "credits" or "license" for more information.
+         ^^^^^^
+SyntaxError: invalid syntax
+>>> >>> import MetaTrader5 as mt5
+  File "<stdin>", line 1
+    >>> import MetaTrader5 as mt5
+    ^^
+SyntaxError: invalid syntax
+>>> >>>
+  File "<stdin>", line 1
+    >>>
+    ^^
+SyntaxError: invalid syntax
+>>> >>> MT5_SERVER = "FTMO-Demo"
+  File "<stdin>", line 1
+    >>> MT5_SERVER = "FTMO-Demo"
+    ^^
+SyntaxError: invalid syntax
+>>> >>> MT5_LOGIN = 1512190437
+  File "<stdin>", line 1
+    >>> MT5_LOGIN = 1512190437
+    ^^
+SyntaxError: invalid syntax
+>>> >>> MT5_PASSWORD = "Picorico1969?"
+  File "<stdin>", line 1
+    >>> MT5_PASSWORD = "Picorico1969?"
+    ^^
+SyntaxError: invalid syntax
+>>> >>>
+  File "<stdin>", line 1
+    >>>
+    ^^
+SyntaxError: invalid syntax
+>>> >>> # Initialize MT5
+  File "<stdin>", line 1
+    >>> # Initialize MT5
+    ^^
+SyntaxError: invalid syntax
+>>> >>> if not mt5.initialize():
+  File "<stdin>", line 1
+    >>> if not mt5.initialize():
+    ^^
+SyntaxError: invalid syntax
+>>> ...     print(f"Initialization failed: {mt5.last_error()}")
+  File "<stdin>", line 1
+    ...     print(f"Initialization failed: {mt5.last_error()}")
+            ^^^^^
+SyntaxError: invalid syntax
+>>> ... else:
+  File "<stdin>", line 1
+    ... else:
+        ^^^^
+SyntaxError: invalid syntax
+>>> ...     authorized = mt5.login(MT5_LOGIN, password=MT5_PASSWORD, server=MT5_SERVER)
+  File "<stdin>", line 1
+    ...     authorized = mt5.login(MT5_LOGIN, password=MT5_PASSWORD, server=MT5_SERVER)
+            ^^^^^^^^^^
+SyntaxError: invalid syntax
+>>> ...     if authorized:
+  File "<stdin>", line 1
+    ...     if authorized:
+                         ^
+SyntaxError: invalid syntax
+>>> ...         print("Connected to MT5 successfully.")
+  File "<stdin>", line 1
+    ...         print("Connected to MT5 successfully.")
+                ^^^^^
+SyntaxError: invalid syntax
+>>> ...         mt5.shutdown()
+  File "<stdin>", line 1
+    ...         mt5.shutdown()
+                ^^^
+SyntaxError: invalid syntax
+>>> ...     else:
+  File "<stdin>", line 1
+    ...     else:
+            ^^^^
+SyntaxError: invalid syntax
+>>> ...         print(f"Login failed: {mt5.last_error()}")
+  File "<stdin>", line 1
+    ...         print(f"Login failed: {mt5.last_error()}")
+                ^^^^^
+SyntaxError: invalid syntax
+>>> ...         mt5.shutdown()
+  File "<stdin>", line 1
+    ...         mt5.shutdown()
+                ^^^
+SyntaxError: invalid syntax
+>>> C:\mt5bot-new>python
+  File "<stdin>", line 1
+    C:\mt5bot-new>python
+       ^
+SyntaxError: unexpected character after line continuation character
+>>> Python 3.12.10 (tags/v3.12.10:0cc8128, Apr  8 2025, 12:21:36) [MSC v.1943 64 bit (AMD64)] on win32
+  File "<stdin>", line 1
+    Python 3.12.10 (tags/v3.12.10:0cc8128, Apr  8 2025, 12:21:36) [MSC v.1943 64 bit (AMD64)] on win32
+           ^^^^
+SyntaxError: invalid syntax
+>>> Type "help", "copyright", "credits" or "license" for more information.
+  File "<stdin>", line 1
+    Type "help", "copyright", "credits" or "license" for more information.
+         ^^^^^^
+SyntaxError: invalid syntax
+>>> >>> import MetaTrader5 as mt5
+  File "<stdin>", line 1
+    >>> import MetaTrader5 as mt5
+    ^^
+SyntaxError: invalid syntax
+>>> >>>
+  File "<stdin>", line 1
+    >>>
+    ^^
+SyntaxError: invalid syntax
+>>> >>> MT5_SERVER = "FTMO-Demo"
+  File "<stdin>", line 1
+    >>> MT5_SERVER = "FTMO-Demo"
+    ^^
+SyntaxError: invalid syntax
+>>> >>> MT5_LOGIN = 1512190437
+  File "<stdin>", line 1
+    >>> MT5_LOGIN = 1512190437
+    ^^
+SyntaxError: invalid syntax
+>>> >>> MT5_PASSWORD = "Picorico1969?"
+  File "<stdin>", line 1
+    >>> MT5_PASSWORD = "Picorico1969?"
+    ^^
+SyntaxError: invalid syntax
+>>> >>>
+  File "<stdin>", line 1
+    >>>
+    ^^
+SyntaxError: invalid syntax
+>>> >>> # Initialize MT5
+  File "<stdin>", line 1
+    >>> # Initialize MT5
+    ^^
+SyntaxError: invalid syntax
+>>> >>> if not mt5.initialize():
+  File "<stdin>", line 1
+    >>> if not mt5.initialize():
+    ^^
+SyntaxError: invalid syntax
+>>> ...     print(f"Initialization failed: {mt5.last_error()}")
+  File "<stdin>", line 1
+    ...     print(f"Initialization failed: {mt5.last_error()}")
+            ^^^^^
+SyntaxError: invalid syntax
+>>> ... else:
+  File "<stdin>", line 1
+    ... else:
+        ^^^^
+SyntaxError: invalid syntax
+>>> ...     authorized = mt5.login(MT5_LOGIN, password=MT5_PASSWORD, server=MT5_SERVER)
+  File "<stdin>", line 1
+    ...     authorized = mt5.login(MT5_LOGIN, password=MT5_PASSWORD, server=MT5_SERVER)
+            ^^^^^^^^^^
+SyntaxError: invalid syntax
+>>> ...     if authorized:
+  File "<stdin>", line 1
+    ...     if authorized:
+                         ^
+SyntaxError: invalid syntax
+>>> ...         print("Connected to MT5 successfully.")
+  File "<stdin>", line 1
+    ...         print("Connected to MT5 successfully.")
+                ^^^^^
+SyntaxError: invalid syntax
+>>> ...         mt5.shutdown()
+  File "<stdin>", line 1
+    ...         mt5.shutdown()
+                ^^^
+SyntaxError: invalid syntax
+>>> ...     else:
+  File "<stdin>", line 1
+    ...     else:
+            ^^^^
+SyntaxError: invalid syntax
+>>> ...         print(f"Login failed: {mt5.last_error()}")
+  File "<stdin>", line 1
+    ...         print(f"Login failed: {mt5.last_error()}")
+                ^^^^^
+SyntaxError: invalid syntax
+>>> ...         mt5.shutdown()
+  File "<stdin>", line 1
+    ...         mt5.shutdown()
+                ^^^
+SyntaxError: invalid syntax
