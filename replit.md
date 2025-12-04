@@ -185,6 +185,12 @@ Start-ScheduledTask -TaskName TradrLive
 - Refactored Discord to minimal slash commands only
 - Created PowerShell deployment scripts for Windows VM
 - Added parity comparison tool (`scripts/compare.py`)
+- **CRITICAL FIX**: Refactored live bot to use PENDING LIMIT ORDERS instead of market orders
+  - Now enters trades at EXACT same levels as backtest (calculated entry price)
+  - Added PendingSetup tracking with persistence to `pending_setups.json`
+  - Main loop: check orders (1 min), validate setups (15 min), scan symbols (4 hrs)
+  - Orders cancelled if SL breached or structure shifts (like backtest)
+- Fixed RiskManager to use FTMO 1% risk (was 0.75% from 5%ers)
 
 ## Development Notes
 
