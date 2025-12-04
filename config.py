@@ -72,6 +72,10 @@ CONTRACT_SPECS = {
 # Set SIGNAL_MODE environment variable to override, e.g., SIGNAL_MODE=aggressive
 SIGNAL_MODE = os.getenv("SIGNAL_MODE", "standard")
 
+# Confluence thresholds for each mode
+MIN_CONFLUENCE_STANDARD = 4  # 4/7 confluence for standard mode
+MIN_CONFLUENCE_AGGRESSIVE = 2  # 2/7 confluence for aggressive mode
+
 
 # ==== Discord ====
 

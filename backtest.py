@@ -15,7 +15,7 @@ from datetime import datetime, date, timedelta, timezone
 from typing import List, Dict, Tuple, Optional
 
 from data import get_ohlcv
-from config import SIGNAL_MODE
+from config import SIGNAL_MODE, MIN_CONFLUENCE_STANDARD, MIN_CONFLUENCE_AGGRESSIVE
 from strategy_core import (
     _infer_trend,
     _pick_direction_from_bias,
@@ -369,7 +369,8 @@ def run_backtest(asset: str, period: str) -> Dict:
     trades: List[Dict] = []
     open_trade: Optional[Dict] = None
     
-    min_trade_conf = 2 if SIGNAL_MODE == "standard" else 1
+    # Use same confluence as live bot (4/7 standard, 2/7 aggressive)
+    min_trade_conf = MIN_CONFLUENCE_STANDARD if SIGNAL_MODE == "standard" else MIN_CONFLUENCE_AGGRESSIVE
     cooldown_bars = 0
     last_trade_idx = -1
 

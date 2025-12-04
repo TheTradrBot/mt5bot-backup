@@ -46,7 +46,7 @@ from tradr.mt5.client import MT5Client
 from tradr.risk.manager import RiskManager
 from tradr.utils.logger import setup_logger
 
-from config import SIGNAL_MODE
+from config import SIGNAL_MODE, MIN_CONFLUENCE_STANDARD, MIN_CONFLUENCE_AGGRESSIVE
 
 
 MT5_SERVER = os.getenv("MT5_SERVER", "")
@@ -54,7 +54,8 @@ MT5_LOGIN = int(os.getenv("MT5_LOGIN", "0"))
 MT5_PASSWORD = os.getenv("MT5_PASSWORD", "")
 SCAN_INTERVAL_HOURS = int(os.getenv("SCAN_INTERVAL_HOURS", "4"))
 
-MIN_CONFLUENCE = 2 if SIGNAL_MODE == "standard" else 1
+# Use same confluence as backtest (4/7 standard, 2/7 aggressive)
+MIN_CONFLUENCE = MIN_CONFLUENCE_STANDARD if SIGNAL_MODE == "standard" else MIN_CONFLUENCE_AGGRESSIVE
 
 TRADABLE_SYMBOLS = [
     "EURUSD", "GBPUSD", "USDJPY", "USDCHF", "USDCAD", "AUDUSD", "NZDUSD",
