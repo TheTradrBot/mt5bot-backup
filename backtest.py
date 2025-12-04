@@ -114,13 +114,13 @@ def _candle_to_datetime(candle: Dict) -> Optional[datetime]:
                     break
                 except Exception:
                     continue
-    
+
     if dt is not None:
         if dt.tzinfo is None:
             dt = dt.replace(tzinfo=timezone.utc)
         else:
             dt = dt.astimezone(timezone.utc)
-    
+
     return dt
 
 
@@ -189,7 +189,7 @@ def _maybe_exit_trade(
                     "rr": -1.0,
                     "exit_reason": "SL",
                 }
-        
+
         if tp1_hit:
             if hit_tp3:
                 rr = (tp3 - entry) / risk
@@ -247,7 +247,7 @@ def _maybe_exit_trade(
                     "rr": -1.0,
                     "exit_reason": "SL",
                 }
-        
+
         if tp1_hit:
             if hit_tp3:
                 rr = (entry - tp3) / risk
@@ -287,7 +287,7 @@ def _maybe_exit_trade(
 def run_backtest(asset: str, period: str) -> Dict:
     """
     Walk-forward backtest of the Blueprint strategy.
-    
+
     Key improvements:
     - No look-ahead bias: uses only data available at each point
     - Proper trade execution simulation
@@ -314,7 +314,7 @@ def run_backtest(asset: str, period: str) -> Dict:
     weekly_dates = _build_date_list(weekly)
     monthly_dates = _build_date_list(monthly)
     h4_dates = _build_date_list(h4)
-    
+
     daily_dts = _build_dt_list(daily)
     weekly_dts = _build_dt_list(weekly)
     monthly_dts = _build_dt_list(monthly)
@@ -368,7 +368,7 @@ def run_backtest(asset: str, period: str) -> Dict:
 
     trades: List[Dict] = []
     open_trade: Optional[Dict] = None
-    
+
     # Use same confluence as live bot (4/7 standard, 2/7 aggressive)
     min_trade_conf = MIN_CONFLUENCE_STANDARD if SIGNAL_MODE == "standard" else MIN_CONFLUENCE_AGGRESSIVE
     cooldown_bars = 0
@@ -446,7 +446,7 @@ def run_backtest(asset: str, period: str) -> Dict:
         has_htf_bias = flags.get("htf_bias", False)
 
         quality_factors = sum([has_location, has_fib, has_liquidity, has_structure, has_htf_bias])
-        
+
         if has_rr and confluence_score >= min_trade_conf and quality_factors >= 1:
             status = "active"
         elif confluence_score >= min_trade_conf:
@@ -484,7 +484,7 @@ def run_backtest(asset: str, period: str) -> Dict:
         }
 
     from config import ACCOUNT_SIZE, RISK_PER_TRADE_PCT
-    
+
     total_trades = len(trades)
     if total_trades > 0:
         wins = sum(1 for t in trades if t["rr"] > 0)
@@ -500,11 +500,11 @@ def run_backtest(asset: str, period: str) -> Dict:
 
     risk_per_trade_usd = ACCOUNT_SIZE * RISK_PER_TRADE_PCT
     total_profit_usd = total_rr * risk_per_trade_usd
-    
+
     running_pnl = 0.0
     max_drawdown = 0.0
     peak = 0.0
-    
+
     for t in trades:
         running_pnl += t["rr"] * risk_per_trade_usd
         if running_pnl > peak:
@@ -512,14 +512,14 @@ def run_backtest(asset: str, period: str) -> Dict:
         drawdown = peak - running_pnl
         if drawdown > max_drawdown:
             max_drawdown = drawdown
-    
+
     max_drawdown_pct = (max_drawdown / ACCOUNT_SIZE) * 100 if ACCOUNT_SIZE > 0 else 0.0
 
     tp1_trail_hits = sum(1 for t in trades if t.get("exit_reason") == "TP1+Trail")
     tp2_hits = sum(1 for t in trades if t.get("exit_reason") == "TP2")
     tp3_hits = sum(1 for t in trades if t.get("exit_reason") == "TP3")
     sl_hits = sum(1 for t in trades if t.get("exit_reason") == "SL")
-    
+
     wins = tp1_trail_hits + tp2_hits + tp3_hits
 
     notes_text = (

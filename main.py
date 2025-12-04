@@ -730,6 +730,13 @@ async def backtest_cmd(interaction: discord.Interaction, period: str, asset: str
             
             min_conf = 4 if SIGNAL_MODE == "standard" else 3
             
+            # Challenge compliance checks
+            challenge_compliant = result.get('challenge_compliant', True)
+            daily_loss_breaches = result.get('daily_loss_breaches', 0)
+            max_dd_breach = result.get('max_dd_breach', False)
+            sl_hits = result.get('sl_hits', 0)
+            tp_hits = result.get('tp_hits', 0)
+            
             msg = (
                 f"**Backtest Results** - 5ers High Stakes 10K\n\n"
                 f"**{asset_upper}** | {period}\n\n"
@@ -740,16 +747,27 @@ async def backtest_cmd(interaction: discord.Interaction, period: str, asset: str
                 f"**Win Rate:** {win_rate:.1f}%\n"
                 f"**Total R:** {total_r:+.2f}R\n"
                 f"**Avg R/Trade:** {avg_r:+.2f}R\n\n"
+                f"**Exit Breakdown:**\n"
+                f"  TP Hits: {tp_hits} ({tp_hits/total_trades*100:.1f}%)\n"
+                f"  SL Hits: {sl_hits} ({sl_hits/total_trades*100:.1f}%)\n\n"
                 f"**Net Return:** {net_return_pct:+.1f}% (${profit_usd:+,.2f})\n"
                 f"**Final Balance:** ${final_balance:,.2f}\n"
                 f"**Max Drawdown:** {max_dd_pct:.2f}%\n\n"
+                f"**Challenge Compliance:**\n"
+                f"  Daily Loss Breaches: {daily_loss_breaches}\n"
+                f"  Max DD Breach: {'YES ⚠️' if max_dd_breach else 'NO ✅'}\n"
+                f"  Overall: {'COMPLIANT ✅' if challenge_compliant else 'NON-COMPLIANT ⚠️'}\n\n"
                 f"**Challenge Status:**\n"
                 f"  Step 1 ({STEP1_PROFIT_TARGET_PCT}% target): {step1_status}\n"
                 f"  Step 2 ({STEP2_PROFIT_TARGET_PCT}% target): {step2_status}\n"
             )
             
-            if max_dd_pct >= FIVERS_10K_RULES.max_total_drawdown_pct:
-                msg += f"\n**WARNING:** Max drawdown {max_dd_pct:.1f}% would breach 10% limit!"
+            if not challenge_compliant:
+                msg += f"\n**⚠️ RISK WARNINGS:**\n"
+                if daily_loss_breaches > 0:
+                    msg += f"- {daily_loss_breaches} day(s) would have breached 5% daily loss limit\n"
+                if max_dd_breach:
+                    msg += f"- Max drawdown {max_dd_pct:.1f}% would breach 10% limit\n"
             
             chunks = split_message(msg, limit=1900)
             for chunk in chunks:
