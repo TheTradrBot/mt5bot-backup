@@ -336,6 +336,79 @@ class MT5Client:
             volume=result.volume,
         )
     
+    def partial_close(self, ticket: int, volume: float) -> TradeResult:
+        """
+        Partially close a position by volume.
+        
+        Args:
+            ticket: Position ticket number
+            volume: Volume to close (must be <= position volume)
+            
+        Returns:
+            TradeResult with success status and details
+        """
+        if not self.connected:
+            return TradeResult(success=False, error="Not connected")
+        
+        mt5 = self._import_mt5()
+        
+        position = mt5.positions_get(ticket=ticket)
+        if not position:
+            return TradeResult(success=False, error=f"Position {ticket} not found")
+        
+        position = position[0]
+        symbol = position.symbol
+        current_volume = position.volume
+        
+        if volume > current_volume:
+            return TradeResult(
+                success=False,
+                error=f"Requested volume {volume} exceeds position volume {current_volume}"
+            )
+        
+        close_volume = round(volume, 2)
+        if close_volume < 0.01:
+            close_volume = 0.01
+        
+        tick = mt5.symbol_info_tick(symbol)
+        if tick is None:
+            return TradeResult(success=False, error=f"Cannot get tick for {symbol}")
+        
+        if position.type == mt5.ORDER_TYPE_BUY:
+            order_type = mt5.ORDER_TYPE_SELL
+            price = tick.bid
+        else:
+            order_type = mt5.ORDER_TYPE_BUY
+            price = tick.ask
+        
+        request = {
+            "action": mt5.TRADE_ACTION_DEAL,
+            "symbol": symbol,
+            "volume": close_volume,
+            "type": order_type,
+            "position": ticket,
+            "price": price,
+            "deviation": 20,
+            "magic": self.MAGIC_NUMBER,
+            "comment": "TradrBot PartialClose",
+            "type_time": mt5.ORDER_TIME_GTC,
+            "type_filling": mt5.ORDER_FILLING_IOC,
+        }
+        
+        result = mt5.order_send(request)
+        
+        if result is None or result.retcode != mt5.TRADE_RETCODE_DONE:
+            error = result.comment if result else "Unknown error"
+            return TradeResult(success=False, error=f"Partial close failed: {error}")
+        
+        return TradeResult(
+            success=True,
+            order_id=result.order,
+            deal_id=result.deal,
+            price=result.price,
+            volume=result.volume,
+        )
+    
     def get_positions(self, symbol: str = None) -> List[Position]:
         """Get open positions."""
         if not self.connected:

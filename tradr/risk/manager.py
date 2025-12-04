@@ -148,6 +148,8 @@ class RiskManager:
     - Dynamic lot reduction: Halves lot for each existing position
     - Daily loss tracking: Blocks trades that would breach 5% daily limit
     - Max drawdown tracking: Blocks trades that would breach 10% overall limit
+    - Emergency close: Closes all positions before hitting hard limits
+    - Partial take profits: Scales out at TP1, TP2, TP3
     """
     
     MAX_DAILY_LOSS_PCT = 5.0
@@ -156,6 +158,11 @@ class RiskManager:
     PHASE1_TARGET_PCT = 10.0
     PHASE2_TARGET_PCT = 5.0
     MIN_PROFITABLE_DAYS = 0
+    
+    MAX_SINGLE_TRADE_RISK_PCT = 1.0
+    MAX_CUMULATIVE_RISK_PCT = 3.0
+    DAILY_LOSS_BUFFER_PCT = 4.5
+    TOTAL_DD_BUFFER_PCT = 9.0
     
     DEFAULT_RISK_PCT = 0.01
     
@@ -181,6 +188,29 @@ class RiskManager:
                 json.dump(self.state.to_dict(), f, indent=2, default=str)
         except Exception as e:
             print(f"[RiskManager] Error saving state: {e}")
+    
+    def sync_from_mt5(self, balance: float, equity: float):
+        """
+        Sync state with actual MT5 account values.
+        
+        Use this on startup to ensure risk manager uses real account values
+        instead of potentially stale state file values.
+        """
+        if abs(self.state.current_balance - balance) > 1.0:
+            print(f"[RiskManager] Syncing balance: {self.state.current_balance:.2f} -> {balance:.2f}")
+            self.state.current_balance = balance
+        
+        if abs(self.state.initial_balance - balance) > 1.0 and not self.state.live_flag:
+            print(f"[RiskManager] Syncing initial balance: {self.state.initial_balance:.2f} -> {balance:.2f}")
+            self.state.initial_balance = balance
+            self.state.highest_balance = max(self.state.highest_balance, balance)
+            self.state.day_start_balance = balance
+        
+        if self.state.highest_balance < equity:
+            self.state.highest_balance = equity
+        
+        self.state.last_update = datetime.now(timezone.utc).isoformat()
+        self.save_state()
     
     def start_challenge(self, phase: int = 1):
         """Start or restart a challenge."""
@@ -283,11 +313,17 @@ class RiskManager:
         entry_price: float,
         stop_loss_price: float,
         requested_lot: float = None,
+        pending_orders_risk: float = 0.0,
     ) -> RiskCheckResult:
         """
-        Pre-trade risk check.
+        Pre-trade risk check with FTMO-compliant limits.
         
-        Simulates worst-case scenario where all open positions + new trade hit SL.
+        Simulates worst-case scenario where all open positions + pending + new trade hit SL.
+        Enforces:
+        - MAX_SINGLE_TRADE_RISK_PCT (1%): Hard cap per trade
+        - MAX_CUMULATIVE_RISK_PCT (3%): Max total open + pending risk
+        - Daily loss and max drawdown limits
+        
         Returns adjusted lot size that won't breach limits.
         """
         self._check_new_day()
@@ -328,8 +364,65 @@ class RiskManager:
                 lot_size = round(lot_size * reduction_factor, 2)
         
         new_trade_risk = sizing["risk_usd"]
+        new_trade_risk_pct = (new_trade_risk / self.state.current_balance) * 100 if self.state.current_balance > 0 else 100
         
-        daily_dd_after, total_dd_after = self._simulate_worst_case_dd(new_trade_risk)
+        if new_trade_risk_pct > self.MAX_SINGLE_TRADE_RISK_PCT:
+            allowed_risk_usd = self.state.current_balance * (self.MAX_SINGLE_TRADE_RISK_PCT / 100)
+            reduction_factor = allowed_risk_usd / new_trade_risk if new_trade_risk > 0 else 0
+            reduced_lot = round(lot_size * reduction_factor * 0.95, 2)
+            
+            if reduced_lot < 0.01:
+                return RiskCheckResult(
+                    allowed=False,
+                    original_lot=lot_size,
+                    adjusted_lot=0.0,
+                    reason=f"HARD CAP: Single trade risk {new_trade_risk_pct:.1f}% exceeds {self.MAX_SINGLE_TRADE_RISK_PCT}% limit",
+                    daily_loss_after=0.0,
+                    max_drawdown_after=0.0,
+                    open_positions_count=open_count,
+                )
+            
+            lot_size = reduced_lot
+            new_trade_risk = allowed_risk_usd * 0.95
+            new_trade_risk_pct = (new_trade_risk / self.state.current_balance) * 100
+        
+        existing_open_risk = self._calculate_total_open_risk()
+        total_cumulative_risk = existing_open_risk + pending_orders_risk + new_trade_risk
+        cumulative_risk_pct = (total_cumulative_risk / self.state.current_balance) * 100 if self.state.current_balance > 0 else 100
+        
+        if cumulative_risk_pct > self.MAX_CUMULATIVE_RISK_PCT:
+            available_risk = self.state.current_balance * (self.MAX_CUMULATIVE_RISK_PCT / 100) - existing_open_risk - pending_orders_risk
+            
+            if available_risk <= 0:
+                return RiskCheckResult(
+                    allowed=False,
+                    original_lot=lot_size,
+                    adjusted_lot=0.0,
+                    reason=f"CUMULATIVE LIMIT: Total risk {cumulative_risk_pct:.1f}% exceeds {self.MAX_CUMULATIVE_RISK_PCT}% limit (open: ${existing_open_risk:.0f}, pending: ${pending_orders_risk:.0f})",
+                    daily_loss_after=0.0,
+                    max_drawdown_after=0.0,
+                    open_positions_count=open_count,
+                )
+            
+            reduction_factor = available_risk / new_trade_risk if new_trade_risk > 0 else 0
+            reduced_lot = round(lot_size * reduction_factor * 0.95, 2)
+            
+            if reduced_lot < 0.01:
+                return RiskCheckResult(
+                    allowed=False,
+                    original_lot=lot_size,
+                    adjusted_lot=0.0,
+                    reason=f"CUMULATIVE LIMIT: Cannot fit trade within {self.MAX_CUMULATIVE_RISK_PCT}% limit",
+                    daily_loss_after=0.0,
+                    max_drawdown_after=0.0,
+                    open_positions_count=open_count,
+                )
+            
+            lot_size = reduced_lot
+            new_trade_risk = available_risk * 0.95
+        
+        total_potential_loss = existing_open_risk + pending_orders_risk + new_trade_risk
+        daily_dd_after, total_dd_after = self._simulate_worst_case_dd(total_potential_loss - existing_open_risk)
         
         if daily_dd_after >= self.MAX_DAILY_LOSS_PCT:
             reduced_lot = lot_size * (self.MAX_DAILY_LOSS_PCT / daily_dd_after) * 0.9
@@ -503,3 +596,73 @@ class RiskManager:
             "start_time": self.state.start_time,
             "last_update": self.state.last_update,
         }
+    
+    def should_emergency_close(self, current_equity: float) -> Tuple[bool, str]:
+        """
+        Check if positions should be closed to protect account.
+        
+        Uses buffer thresholds to close BEFORE hitting hard limits:
+        - DAILY_LOSS_BUFFER_PCT (4.5%): Close before 5% daily loss limit
+        - TOTAL_DD_BUFFER_PCT (9%): Close before 10% max drawdown limit
+        
+        Returns:
+            Tuple of (should_close, reason) where should_close is True if
+            emergency close is needed and reason explains why.
+        """
+        daily_loss_pct = 0.0
+        if current_equity < self.state.day_start_balance:
+            daily_loss_pct = ((self.state.day_start_balance - current_equity) / self.state.day_start_balance) * 100
+        
+        total_dd_pct = 0.0
+        if current_equity < self.state.initial_balance:
+            total_dd_pct = ((self.state.initial_balance - current_equity) / self.state.initial_balance) * 100
+        
+        if daily_loss_pct >= self.DAILY_LOSS_BUFFER_PCT:
+            return (
+                True,
+                f"EMERGENCY: Daily loss at {daily_loss_pct:.2f}% (buffer: {self.DAILY_LOSS_BUFFER_PCT}%, limit: {self.MAX_DAILY_LOSS_PCT}%)"
+            )
+        
+        if total_dd_pct >= self.TOTAL_DD_BUFFER_PCT:
+            return (
+                True,
+                f"EMERGENCY: Total drawdown at {total_dd_pct:.2f}% (buffer: {self.TOTAL_DD_BUFFER_PCT}%, limit: {self.MAX_TOTAL_DRAWDOWN_PCT}%)"
+            )
+        
+        return (False, "")
+    
+    def calculate_pending_orders_risk(self, pending_setups: List[Dict]) -> float:
+        """
+        Calculate total risk from pending orders.
+        
+        Args:
+            pending_setups: List of pending setup dictionaries with 'lot_size', 
+                          'entry_price', 'stop_loss', and 'symbol' keys.
+        
+        Returns:
+            Total potential risk in USD from all pending orders.
+        """
+        total_risk = 0.0
+        for setup in pending_setups:
+            symbol = setup.get('symbol', '')
+            lot_size = setup.get('lot_size', 0.0)
+            entry = setup.get('entry_price', 0.0)
+            sl = setup.get('stop_loss', 0.0)
+            
+            if lot_size > 0 and entry > 0 and sl > 0:
+                stop_distance = abs(entry - sl)
+                pip_value = get_pip_value(symbol, entry)
+                
+                from tradr.risk.position_sizing import get_contract_specs
+                specs = get_contract_specs(symbol)
+                pip_size = specs.get("pip_value", 0.0001)
+                
+                if specs.get("pip_location", 4) == 0:
+                    stop_pips = stop_distance
+                else:
+                    stop_pips = stop_distance / pip_size
+                
+                risk_usd = stop_pips * pip_value * lot_size
+                total_risk += risk_usd
+        
+        return total_risk

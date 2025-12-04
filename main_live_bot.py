@@ -64,6 +64,7 @@ class PendingSetup:
     order_ticket: Optional[int] = None
     status: str = "pending"
     lot_size: float = 0.0
+    partial_closes: int = 0
     
     def to_dict(self) -> Dict:
         return asdict(self)
@@ -174,6 +175,13 @@ class LiveTradingBot:
         log.info(f"Balance: ${account.get('balance', 0):,.2f}")
         log.info(f"Equity: ${account.get('equity', 0):,.2f}")
         log.info(f"Leverage: 1:{account.get('leverage', 0)}")
+        
+        balance = account.get('balance', 0)
+        equity = account.get('equity', 0)
+        if balance > 0:
+            log.info("Syncing risk manager with MT5 account...")
+            self.risk_manager.sync_from_mt5(balance, equity)
+            log.info(f"Risk manager synced: Balance=${balance:,.2f}, Equity=${equity:,.2f}")
         
         return True
     
@@ -316,6 +324,19 @@ class LiveTradingBot:
             "notes": notes,
         }
     
+    def _calculate_pending_orders_risk(self) -> float:
+        """Calculate total risk from all pending setups."""
+        pending_list = []
+        for symbol, setup in self.pending_setups.items():
+            if setup.status == "pending" and setup.lot_size > 0:
+                pending_list.append({
+                    'symbol': symbol,
+                    'lot_size': setup.lot_size,
+                    'entry_price': setup.entry_price,
+                    'stop_loss': setup.stop_loss,
+                })
+        return self.risk_manager.calculate_pending_orders_risk(pending_list)
+    
     def place_setup_order(self, setup: Dict) -> bool:
         """
         Place a pending limit order for a setup (like backtest does).
@@ -324,9 +345,11 @@ class LiveTradingBot:
         at the calculated entry level to match backtest behavior exactly.
         
         Risk checks (before order):
-        1. Simulate worst-case DD if all open positions + new trade hit SL
-        2. Block trade if it would breach daily (5%) or max (10%) DD
-        3. Reduce lot size dynamically based on open positions
+        1. Simulate worst-case DD if all open positions + pending + new trade hit SL
+        2. Hard cap: max 1% risk per single trade
+        3. Cumulative limit: max 3% total open + pending risk
+        4. Block trade if it would breach daily (5%) or max (10%) DD
+        5. Reduce lot size dynamically based on open positions
         """
         symbol = setup["symbol"]
         direction = setup["direction"]
@@ -344,11 +367,15 @@ class LiveTradingBot:
                 log.info(f"[{symbol}] Already have pending setup at {existing.entry_price:.5f}, skipping")
                 return False
         
+        pending_orders_risk = self._calculate_pending_orders_risk()
+        log.info(f"[{symbol}] Current pending orders risk: ${pending_orders_risk:.2f}")
+        
         risk_check = self.risk_manager.check_trade(
             symbol=symbol,
             direction=direction,
             entry_price=entry,
             stop_loss_price=sl,
+            pending_orders_risk=pending_orders_risk,
         )
         
         if not risk_check.allowed:
@@ -586,6 +613,158 @@ class LiveTradingBot:
         
         self.last_validate_time = datetime.now(timezone.utc)
     
+    def monitor_live_pnl(self) -> bool:
+        """
+        Monitor live P/L and trigger emergency close if needed.
+        
+        Checks current equity against buffer thresholds:
+        - 4.5% daily loss triggers emergency close (before 5% limit)
+        - 9% total drawdown triggers emergency close (before 10% limit)
+        
+        Returns:
+            True if emergency close was triggered, False otherwise
+        """
+        account = self.mt5.get_account_info()
+        if not account:
+            log.warning("Could not get account info for P/L monitoring")
+            return False
+        
+        current_equity = account.get('equity', 0)
+        if current_equity <= 0:
+            return False
+        
+        should_close, reason = self.risk_manager.should_emergency_close(current_equity)
+        
+        if should_close:
+            log.error("=" * 70)
+            log.error("EMERGENCY CLOSE TRIGGERED!")
+            log.error(reason)
+            log.error("=" * 70)
+            
+            positions = self.mt5.get_my_positions()
+            for pos in positions:
+                log.warning(f"Emergency closing position: {pos.symbol} ticket={pos.ticket}")
+                result = self.mt5.close_position(pos.ticket)
+                if result.success:
+                    log.info(f"  Closed {pos.symbol} at {result.price}")
+                    self.risk_manager.record_trade_close(
+                        order_id=pos.ticket,
+                        exit_price=result.price,
+                        pnl_usd=pos.profit,
+                    )
+                else:
+                    log.error(f"  Failed to close {pos.symbol}: {result.error}")
+            
+            pending_orders = self.mt5.get_my_pending_orders()
+            for order in pending_orders:
+                log.warning(f"Emergency cancelling pending order: {order.symbol} ticket={order.ticket}")
+                self.mt5.cancel_pending_order(order.ticket)
+            
+            self.pending_setups.clear()
+            self._save_pending_setups()
+            
+            log.error("Emergency close complete - trading halted until restart")
+            return True
+        
+        return False
+    
+    def manage_partial_takes(self):
+        """
+        Manage partial take profits for active positions.
+        
+        Strategy:
+        - TP1 hit: Close 33% of position volume
+        - TP2 hit: Close 50% of remaining (another 33% of original)
+        - TP3 hit or SL hit: Close remainder
+        
+        Tracks partial close state in pending_setups.
+        """
+        positions = self.mt5.get_my_positions()
+        if not positions:
+            return
+        
+        for pos in positions:
+            symbol = pos.symbol
+            
+            if symbol not in self.pending_setups:
+                continue
+            
+            setup = self.pending_setups[symbol]
+            if setup.status != "filled":
+                continue
+            
+            tick = self.mt5.get_tick(symbol)
+            if not tick:
+                continue
+            
+            current_price = tick.bid if setup.direction == "bullish" else tick.ask
+            
+            tp1 = setup.tp1
+            tp2 = setup.tp2
+            tp3 = setup.tp3
+            
+            partial_state = getattr(setup, 'partial_closes', 0) if hasattr(setup, 'partial_closes') else 0
+            
+            tp1_hit = False
+            tp2_hit = False
+            tp3_hit = False
+            
+            if setup.direction == "bullish":
+                tp1_hit = current_price >= tp1 if tp1 else False
+                tp2_hit = current_price >= tp2 if tp2 else False
+                tp3_hit = current_price >= tp3 if tp3 else False
+            else:
+                tp1_hit = current_price <= tp1 if tp1 else False
+                tp2_hit = current_price <= tp2 if tp2 else False
+                tp3_hit = current_price <= tp3 if tp3 else False
+            
+            original_volume = setup.lot_size
+            current_volume = pos.volume
+            
+            if tp1_hit and partial_state == 0:
+                close_volume = round(original_volume * 0.33, 2)
+                if close_volume >= 0.01 and close_volume <= current_volume:
+                    log.info(f"[{symbol}] TP1 HIT! Closing 33% ({close_volume} lots) of position")
+                    result = self.mt5.partial_close(pos.ticket, close_volume)
+                    if result.success:
+                        log.info(f"[{symbol}] Partial close successful at {result.price}")
+                        setup.partial_closes = 1
+                        self._save_pending_setups()
+                        
+                        if tp2:
+                            self.mt5.modify_sl_tp(pos.ticket, tp=tp2)
+                            log.info(f"[{symbol}] TP updated to TP2: {tp2}")
+                    else:
+                        log.error(f"[{symbol}] Partial close failed: {result.error}")
+            
+            elif tp2_hit and partial_state == 1:
+                remaining_volume = current_volume
+                close_volume = round(remaining_volume * 0.50, 2)
+                if close_volume >= 0.01 and close_volume <= remaining_volume:
+                    log.info(f"[{symbol}] TP2 HIT! Closing 50% of remaining ({close_volume} lots)")
+                    result = self.mt5.partial_close(pos.ticket, close_volume)
+                    if result.success:
+                        log.info(f"[{symbol}] Partial close successful at {result.price}")
+                        setup.partial_closes = 2
+                        self._save_pending_setups()
+                        
+                        if tp3:
+                            self.mt5.modify_sl_tp(pos.ticket, tp=tp3)
+                            log.info(f"[{symbol}] TP updated to TP3: {tp3}")
+                    else:
+                        log.error(f"[{symbol}] Partial close failed: {result.error}")
+            
+            elif tp3_hit and partial_state == 2:
+                log.info(f"[{symbol}] TP3 HIT! Closing remainder of position")
+                result = self.mt5.close_position(pos.ticket)
+                if result.success:
+                    log.info(f"[{symbol}] Position fully closed at {result.price}")
+                    setup.status = "closed"
+                    setup.partial_closes = 3
+                    self._save_pending_setups()
+                else:
+                    log.error(f"[{symbol}] Failed to close position: {result.error}")
+    
     def scan_all_symbols(self):
         """
         Scan all tradable symbols and place pending orders.
@@ -653,23 +832,32 @@ class LiveTradingBot:
         Main trading loop - runs 24/7.
         
         Schedule:
+        - Every 30 seconds: monitor_live_pnl() for emergency close protection
+        - Every 30 seconds: manage_partial_takes() for partial TP management
         - Every minute: check_pending_orders() and check_position_updates()
         - Every 15 min: validate_all_setups() to ensure pending orders are still valid
         - Every 4 hours: scan_all_symbols() for new setups
         
-        This matches backtest behavior where:
-        - Limit orders wait for fill at entry price
-        - Orders are cancelled if SL breached or structure changes
+        FTMO Compliance:
+        - Hard cap: 1% max risk per single trade
+        - Cumulative: 3% max total open + pending risk
+        - Emergency close at 4.5% daily loss or 9% total drawdown
+        - Partial take profits: 33% at TP1, 33% at TP2, remainder at TP3
         """
         log.info("=" * 70)
-        log.info("TRADR BOT - LIVE TRADING (PENDING ORDER MODE)")
+        log.info("TRADR BOT - LIVE TRADING (FTMO COMPLIANT)")
         log.info("=" * 70)
         log.info(f"Using SAME strategy as backtests (strategy_core.py)")
-        log.info(f"Now using PENDING ORDERS for exact backtest parity!")
+        log.info(f"FTMO Risk Limits:")
+        log.info(f"  - Max single trade risk: 1%")
+        log.info(f"  - Max cumulative risk: 3%")
+        log.info(f"  - Emergency close at: 4.5% daily loss / 9% drawdown")
+        log.info(f"  - Partial TPs: 33% TP1, 33% TP2, remainder TP3")
         log.info(f"Server: {MT5_SERVER}")
         log.info(f"Login: {MT5_LOGIN}")
         log.info(f"Scan Interval: {SCAN_INTERVAL_HOURS} hours")
         log.info(f"Validate Interval: {self.VALIDATE_INTERVAL_MINUTES} minutes")
+        log.info(f"P/L Monitor Interval: 30 seconds")
         log.info(f"Strategy Mode: {SIGNAL_MODE}")
         log.info(f"Min Confluence: {MIN_CONFLUENCE}/7")
         log.info(f"Symbols: {len(TRADABLE_SYMBOLS)}")
@@ -686,10 +874,27 @@ class LiveTradingBot:
         
         self.scan_all_symbols()
         self.last_validate_time = datetime.now(timezone.utc)
+        last_pnl_check = datetime.now(timezone.utc)
+        emergency_triggered = False
         
         while running:
             try:
                 now = datetime.now(timezone.utc)
+                
+                if not emergency_triggered:
+                    time_since_pnl_check = (now - last_pnl_check).total_seconds()
+                    if time_since_pnl_check >= 30:
+                        if self.monitor_live_pnl():
+                            emergency_triggered = True
+                            log.error("Emergency close triggered - halting all trading")
+                            continue
+                        
+                        self.manage_partial_takes()
+                        last_pnl_check = now
+                
+                if emergency_triggered:
+                    time.sleep(60)
+                    continue
                 
                 self.check_pending_orders()
                 self.check_position_updates()
@@ -713,7 +918,7 @@ class LiveTradingBot:
                         time.sleep(60)
                         continue
                 
-                time.sleep(60)
+                time.sleep(30)
                 
             except KeyboardInterrupt:
                 break
