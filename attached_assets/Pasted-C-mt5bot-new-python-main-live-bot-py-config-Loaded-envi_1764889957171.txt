@@ -1,0 +1,247 @@
+C:\mt5bot-new>python main_live_bot.py
+[config] ✓ Loaded environment from C:\mt5bot-new\.env
+2025-12-04 15:11:54 | INFO     | tradr | ======================================================================
+2025-12-04 15:11:54 | INFO     | tradr | TRADR BOT - LIVE TRADING (PENDING ORDER MODE)
+2025-12-04 15:11:54 | INFO     | tradr | ======================================================================
+2025-12-04 15:11:54 | INFO     | tradr | Using SAME strategy as backtests (strategy_core.py)
+2025-12-04 15:11:54 | INFO     | tradr | Now using PENDING ORDERS for exact backtest parity!
+2025-12-04 15:11:54 | INFO     | tradr | Server: FTMO-Demo
+2025-12-04 15:11:54 | INFO     | tradr | Login: 1512190437
+2025-12-04 15:11:54 | INFO     | tradr | Scan Interval: 4 hours
+2025-12-04 15:11:54 | INFO     | tradr | Validate Interval: 15 minutes
+2025-12-04 15:11:54 | INFO     | tradr | Strategy Mode: standard
+2025-12-04 15:11:54 | INFO     | tradr | Min Confluence: 4/7
+2025-12-04 15:11:54 | INFO     | tradr | Symbols: 34
+2025-12-04 15:11:54 | INFO     | tradr | ======================================================================
+2025-12-04 15:11:54 | INFO     | tradr | ======================================================================
+2025-12-04 15:11:54 | INFO     | tradr | CONNECTING TO MT5
+2025-12-04 15:11:54 | INFO     | tradr | ======================================================================
+[MT5] Connected: 1512190437 @ FTMO-Demo
+[MT5] Balance: $9,991.69, Equity: $9,991.69
+2025-12-04 15:11:54 | INFO     | tradr | Connected: 1512190437 @ FTMO-Demo
+2025-12-04 15:11:54 | INFO     | tradr | Balance: $9,991.69
+2025-12-04 15:11:54 | INFO     | tradr | Equity: $9,991.69
+2025-12-04 15:11:54 | INFO     | tradr | Leverage: 1:100
+2025-12-04 15:11:54 | INFO     | tradr | Starting trading loop...
+2025-12-04 15:11:54 | INFO     | tradr | Press Ctrl+C to stop
+2025-12-04 15:11:54 | INFO     | tradr | ======================================================================
+2025-12-04 15:11:54 | INFO     | tradr | MARKET SCAN - 2025-12-04 23:11 UTC
+2025-12-04 15:11:54 | INFO     | tradr | Strategy Mode: standard (Min Confluence: 4/7)
+2025-12-04 15:11:54 | INFO     | tradr | Using PENDING ORDERS (like backtest)
+2025-12-04 15:11:54 | INFO     | tradr | ======================================================================
+2025-12-04 15:11:54 | INFO     | tradr | [EURUSD] Scanning...
+2025-12-04 15:11:54 | INFO     | tradr | [EURUSD] BULLISH | Conf: 3/7 | Quality: 2 | Status: scan_only
+2025-12-04 15:11:54 | INFO     | tradr | [GBPUSD] Scanning...
+2025-12-04 15:11:54 | INFO     | tradr | [GBPUSD] BULLISH | Conf: 2/7 | Quality: 1 | Status: scan_only
+2025-12-04 15:11:55 | INFO     | tradr | [USDJPY] Scanning...
+2025-12-04 15:11:55 | INFO     | tradr | [USDJPY] BULLISH | Conf: 4/7 | Quality: 3 | Status: active
+2025-12-04 15:11:55 | INFO     | tradr | [USDJPY] ACTIVE SIGNAL FOUND!
+2025-12-04 15:11:55 | INFO     | tradr |   Direction: BULLISH
+2025-12-04 15:11:55 | INFO     | tradr |   Confluence: 4/7
+2025-12-04 15:11:55 | INFO     | tradr |   Entry: 153.96523
+2025-12-04 15:11:55 | INFO     | tradr |   SL: 151.04352
+2025-12-04 15:11:55 | INFO     | tradr |   TP1: 155.71825
+2025-12-04 15:11:55 | INFO     | tradr |   TP2: 157.17911
+2025-12-04 15:11:55 | INFO     | tradr |   TP3: 159.22431
+2025-12-04 15:11:55 | WARNING  | tradr | [USDJPY] Trade BLOCKED by risk manager: Challenge not active
+2025-12-04 15:11:56 | INFO     | tradr | [USDCHF] Scanning...
+2025-12-04 15:11:56 | INFO     | tradr | [USDCHF] BULLISH | Conf: 3/7 | Quality: 1 | Status: scan_only
+2025-12-04 15:11:56 | INFO     | tradr | [USDCAD] Scanning...
+2025-12-04 15:11:56 | INFO     | tradr | [USDCAD] BEARISH | Conf: 3/7 | Quality: 2 | Status: scan_only
+2025-12-04 15:11:57 | INFO     | tradr | [AUDUSD] Scanning...
+2025-12-04 15:11:57 | INFO     | tradr | [AUDUSD] BULLISH | Conf: 3/7 | Quality: 2 | Status: scan_only
+2025-12-04 15:11:57 | INFO     | tradr | [NZDUSD] Scanning...
+2025-12-04 15:11:57 | INFO     | tradr | [NZDUSD] BULLISH | Conf: 2/7 | Quality: 1 | Status: scan_only
+2025-12-04 15:11:58 | INFO     | tradr | [EURGBP] Scanning...
+2025-12-04 15:11:58 | INFO     | tradr | [EURGBP] BEARISH | Conf: 3/7 | Quality: 2 | Status: scan_only
+2025-12-04 15:11:58 | INFO     | tradr | [EURJPY] Scanning...
+2025-12-04 15:11:58 | INFO     | tradr | [EURJPY] BULLISH | Conf: 5/7 | Quality: 3 | Status: active
+2025-12-04 15:11:58 | INFO     | tradr | [EURJPY] ACTIVE SIGNAL FOUND!
+2025-12-04 15:11:58 | INFO     | tradr |   Direction: BULLISH
+2025-12-04 15:11:58 | INFO     | tradr |   Confluence: 5/7
+2025-12-04 15:11:58 | INFO     | tradr |   Entry: 178.10489
+2025-12-04 15:11:58 | INFO     | tradr |   SL: 175.21800
+2025-12-04 15:11:58 | INFO     | tradr |   TP1: 179.83703
+2025-12-04 15:11:59 | INFO     | tradr |   TP2: 181.28048
+2025-12-04 15:11:59 | INFO     | tradr |   TP3: 183.30130
+2025-12-04 15:11:59 | WARNING  | tradr | [EURJPY] Trade BLOCKED by risk manager: Challenge not active
+2025-12-04 15:11:59 | INFO     | tradr | [EURCHF] Scanning...
+2025-12-04 15:11:59 | INFO     | tradr | [EURCHF] BULLISH | Conf: 5/7 | Quality: 3 | Status: active
+2025-12-04 15:11:59 | INFO     | tradr | [EURCHF] ACTIVE SIGNAL FOUND!
+2025-12-04 15:11:59 | INFO     | tradr |   Direction: BULLISH
+2025-12-04 15:11:59 | INFO     | tradr |   Confluence: 5/7
+2025-12-04 15:11:59 | INFO     | tradr |   Entry: 0.92445
+2025-12-04 15:11:59 | INFO     | tradr |   SL: 0.91619
+2025-12-04 15:11:59 | INFO     | tradr |   TP1: 0.92941
+2025-12-04 15:11:59 | INFO     | tradr |   TP2: 0.93354
+2025-12-04 15:11:59 | INFO     | tradr |   TP3: 0.93933
+2025-12-04 15:11:59 | WARNING  | tradr | [EURCHF] Trade BLOCKED by risk manager: Challenge not active
+2025-12-04 15:12:00 | INFO     | tradr | [EURAUD] Scanning...
+2025-12-04 15:12:00 | INFO     | tradr | [EURAUD] BEARISH | Conf: 3/7 | Quality: 2 | Status: scan_only
+2025-12-04 15:12:00 | INFO     | tradr | [EURCAD] Scanning...
+2025-12-04 15:12:00 | INFO     | tradr | [EURCAD] BULLISH | Conf: 4/7 | Quality: 2 | Status: active
+2025-12-04 15:12:00 | INFO     | tradr | [EURCAD] ACTIVE SIGNAL FOUND!
+2025-12-04 15:12:00 | INFO     | tradr |   Direction: BULLISH
+2025-12-04 15:12:00 | INFO     | tradr |   Confluence: 4/7
+2025-12-04 15:12:00 | INFO     | tradr |   Entry: 1.62162
+2025-12-04 15:12:00 | INFO     | tradr |   SL: 1.61052
+2025-12-04 15:12:00 | INFO     | tradr |   TP1: 1.62828
+2025-12-04 15:12:00 | INFO     | tradr |   TP2: 1.63383
+2025-12-04 15:12:00 | INFO     | tradr |   TP3: 1.64161
+2025-12-04 15:12:00 | WARNING  | tradr | [EURCAD] Trade BLOCKED by risk manager: Challenge not active
+2025-12-04 15:12:01 | INFO     | tradr | [EURNZD] Scanning...
+2025-12-04 15:12:01 | INFO     | tradr | [EURNZD] BEARISH | Conf: 2/7 | Quality: 1 | Status: scan_only
+2025-12-04 15:12:02 | INFO     | tradr | [GBPJPY] Scanning...
+2025-12-04 15:12:02 | INFO     | tradr | [GBPJPY] BULLISH | Conf: 4/7 | Quality: 2 | Status: active
+2025-12-04 15:12:02 | INFO     | tradr | [GBPJPY] ACTIVE SIGNAL FOUND!
+2025-12-04 15:12:02 | INFO     | tradr |   Direction: BULLISH
+2025-12-04 15:12:02 | INFO     | tradr |   Confluence: 4/7
+2025-12-04 15:12:02 | INFO     | tradr |   Entry: 202.03331
+2025-12-04 15:12:02 | INFO     | tradr |   SL: 198.41446
+2025-12-04 15:12:02 | INFO     | tradr |   TP1: 204.20462
+2025-12-04 15:12:02 | INFO     | tradr |   TP2: 206.01404
+2025-12-04 15:12:02 | INFO     | tradr |   TP3: 208.54723
+2025-12-04 15:12:02 | WARNING  | tradr | [GBPJPY] Trade BLOCKED by risk manager: Challenge not active
+2025-12-04 15:12:02 | INFO     | tradr | [GBPCHF] Scanning...
+2025-12-04 15:12:02 | INFO     | tradr | [GBPCHF] BULLISH | Conf: 3/7 | Quality: 2 | Status: scan_only
+2025-12-04 15:12:03 | INFO     | tradr | [GBPAUD] Scanning...
+2025-12-04 15:12:03 | INFO     | tradr | [GBPAUD] BEARISH | Conf: 3/7 | Quality: 2 | Status: scan_only
+2025-12-04 15:12:04 | INFO     | tradr | [GBPCAD] Scanning...
+2025-12-04 15:12:04 | INFO     | tradr | [GBPCAD] BULLISH | Conf: 4/7 | Quality: 2 | Status: active
+2025-12-04 15:12:04 | INFO     | tradr | [GBPCAD] ACTIVE SIGNAL FOUND!
+2025-12-04 15:12:04 | INFO     | tradr |   Direction: BULLISH
+2025-12-04 15:12:04 | INFO     | tradr |   Confluence: 4/7
+2025-12-04 15:12:04 | INFO     | tradr |   Entry: 1.84388
+2025-12-04 15:12:04 | INFO     | tradr |   SL: 1.82773
+2025-12-04 15:12:04 | INFO     | tradr |   TP1: 1.85358
+2025-12-04 15:12:04 | INFO     | tradr |   TP2: 1.86165
+2025-12-04 15:12:04 | INFO     | tradr |   TP3: 1.87296
+2025-12-04 15:12:04 | WARNING  | tradr | [GBPCAD] Trade BLOCKED by risk manager: Challenge not active
+2025-12-04 15:12:04 | INFO     | tradr | [GBPNZD] Scanning...
+2025-12-04 15:12:04 | INFO     | tradr | [GBPNZD] BEARISH | Conf: 3/7 | Quality: 2 | Status: scan_only
+2025-12-04 15:12:05 | INFO     | tradr | [AUDJPY] Scanning...
+2025-12-04 15:12:05 | INFO     | tradr | [AUDJPY] BULLISH | Conf: 4/7 | Quality: 3 | Status: active
+2025-12-04 15:12:05 | INFO     | tradr | [AUDJPY] ACTIVE SIGNAL FOUND!
+2025-12-04 15:12:05 | INFO     | tradr |   Direction: BULLISH
+2025-12-04 15:12:05 | INFO     | tradr |   Confluence: 4/7
+2025-12-04 15:12:05 | INFO     | tradr |   Entry: 100.22127
+2025-12-04 15:12:05 | INFO     | tradr |   SL: 98.40157
+2025-12-04 15:12:05 | INFO     | tradr |   TP1: 101.31308
+2025-12-04 15:12:05 | INFO     | tradr |   TP2: 102.22293
+2025-12-04 15:12:05 | INFO     | tradr |   TP3: 103.49671
+2025-12-04 15:12:05 | WARNING  | tradr | [AUDJPY] Trade BLOCKED by risk manager: Challenge not active
+2025-12-04 15:12:05 | INFO     | tradr | [AUDCHF] Scanning...
+2025-12-04 15:12:06 | INFO     | tradr | [AUDCHF] BULLISH | Conf: 4/7 | Quality: 3 | Status: active
+2025-12-04 15:12:06 | INFO     | tradr | [AUDCHF] ACTIVE SIGNAL FOUND!
+2025-12-04 15:12:06 | INFO     | tradr |   Direction: BULLISH
+2025-12-04 15:12:06 | INFO     | tradr |   Confluence: 4/7
+2025-12-04 15:12:06 | INFO     | tradr |   Entry: 0.51638
+2025-12-04 15:12:06 | INFO     | tradr |   SL: 0.50582
+2025-12-04 15:12:06 | INFO     | tradr |   TP1: 0.52271
+2025-12-04 15:12:06 | INFO     | tradr |   TP2: 0.52798
+2025-12-04 15:12:06 | INFO     | tradr |   TP3: 0.53537
+2025-12-04 15:12:06 | WARNING  | tradr | [AUDCHF] Trade BLOCKED by risk manager: Challenge not active
+2025-12-04 15:12:06 | INFO     | tradr | [AUDCAD] Scanning...
+2025-12-04 15:12:06 | INFO     | tradr | [AUDCAD] BULLISH | Conf: 3/7 | Quality: 2 | Status: scan_only
+2025-12-04 15:12:07 | INFO     | tradr | [AUDNZD] Scanning...
+2025-12-04 15:12:07 | INFO     | tradr | [AUDNZD] BULLISH | Conf: 4/7 | Quality: 3 | Status: active
+2025-12-04 15:12:07 | INFO     | tradr | [AUDNZD] ACTIVE SIGNAL FOUND!
+2025-12-04 15:12:07 | INFO     | tradr |   Direction: BULLISH
+2025-12-04 15:12:07 | INFO     | tradr |   Confluence: 4/7
+2025-12-04 15:12:07 | INFO     | tradr |   Entry: 1.14189
+2025-12-04 15:12:07 | INFO     | tradr |   SL: 1.12572
+2025-12-04 15:12:07 | INFO     | tradr |   TP1: 1.15159
+2025-12-04 15:12:07 | INFO     | tradr |   TP2: 1.15967
+2025-12-04 15:12:07 | INFO     | tradr |   TP3: 1.17099
+2025-12-04 15:12:07 | WARNING  | tradr | [AUDNZD] Trade BLOCKED by risk manager: Challenge not active
+2025-12-04 15:12:07 | INFO     | tradr | [NZDJPY] Scanning...
+2025-12-04 15:12:07 | INFO     | tradr | [NZDJPY] BULLISH | Conf: 4/7 | Quality: 3 | Status: active
+2025-12-04 15:12:07 | INFO     | tradr | [NZDJPY] ACTIVE SIGNAL FOUND!
+2025-12-04 15:12:07 | INFO     | tradr |   Direction: BULLISH
+2025-12-04 15:12:07 | INFO     | tradr |   Confluence: 4/7
+2025-12-04 15:12:07 | INFO     | tradr |   Entry: 86.68544
+2025-12-04 15:12:07 | INFO     | tradr |   SL: 84.99000
+2025-12-04 15:12:07 | INFO     | tradr |   TP1: 87.70270
+2025-12-04 15:12:08 | INFO     | tradr |   TP2: 88.55042
+2025-12-04 15:12:08 | INFO     | tradr |   TP3: 89.73723
+2025-12-04 15:12:08 | WARNING  | tradr | [NZDJPY] Trade BLOCKED by risk manager: Challenge not active
+2025-12-04 15:12:08 | INFO     | tradr | [NZDCHF] Scanning...
+2025-12-04 15:12:08 | INFO     | tradr | [NZDCHF] BULLISH | Conf: 3/7 | Quality: 2 | Status: scan_only
+2025-12-04 15:12:09 | INFO     | tradr | [NZDCAD] Scanning...
+2025-12-04 15:12:09 | INFO     | tradr | [NZDCAD] BULLISH | Conf: 3/7 | Quality: 2 | Status: scan_only
+2025-12-04 15:12:09 | INFO     | tradr | [CADJPY] Scanning...
+2025-12-04 15:12:09 | INFO     | tradr | [CADJPY] BULLISH | Conf: 4/7 | Quality: 3 | Status: active
+2025-12-04 15:12:09 | INFO     | tradr | [CADJPY] ACTIVE SIGNAL FOUND!
+2025-12-04 15:12:09 | INFO     | tradr |   Direction: BULLISH
+2025-12-04 15:12:09 | INFO     | tradr |   Confluence: 4/7
+2025-12-04 15:12:09 | INFO     | tradr |   Entry: 109.75900
+2025-12-04 15:12:09 | INFO     | tradr |   SL: 107.81901
+2025-12-04 15:12:09 | INFO     | tradr |   TP1: 110.92299
+2025-12-04 15:12:09 | INFO     | tradr |   TP2: 111.89298
+2025-12-04 15:12:09 | INFO     | tradr |   TP3: 113.25097
+2025-12-04 15:12:09 | WARNING  | tradr | [CADJPY] Trade BLOCKED by risk manager: Challenge not active
+2025-12-04 15:12:10 | INFO     | tradr | [CADCHF] Scanning...
+2025-12-04 15:12:10 | INFO     | tradr | [CADCHF] BULLISH | Conf: 3/7 | Quality: 1 | Status: scan_only
+2025-12-04 15:12:10 | INFO     | tradr | [CHFJPY] Scanning...
+2025-12-04 15:12:11 | INFO     | tradr | [CHFJPY] BEARISH | Conf: 4/7 | Quality: 3 | Status: active
+2025-12-04 15:12:11 | INFO     | tradr | [CHFJPY] ACTIVE SIGNAL FOUND!
+2025-12-04 15:12:11 | INFO     | tradr |   Direction: BEARISH
+2025-12-04 15:12:11 | INFO     | tradr |   Confluence: 4/7
+2025-12-04 15:12:11 | INFO     | tradr |   Entry: 192.99800
+2025-12-04 15:12:11 | INFO     | tradr |   SL: 196.28436
+2025-12-04 15:12:11 | INFO     | tradr |   TP1: 191.02618
+2025-12-04 15:12:11 | INFO     | tradr |   TP2: 189.38300
+2025-12-04 15:12:11 | INFO     | tradr |   TP3: 187.08255
+2025-12-04 15:12:11 | WARNING  | tradr | [CHFJPY] Trade BLOCKED by risk manager: Challenge not active
+2025-12-04 15:12:11 | INFO     | tradr | [XAUUSD] Scanning...
+2025-12-04 15:12:11 | INFO     | tradr | [XAUUSD] BULLISH | Conf: 3/7 | Quality: 2 | Status: scan_only
+2025-12-04 15:12:12 | INFO     | tradr | [XAGUSD] Scanning...
+2025-12-04 15:12:12 | INFO     | tradr | [XAGUSD] BULLISH | Conf: 4/7 | Quality: 3 | Status: active
+2025-12-04 15:12:12 | INFO     | tradr | [XAGUSD] ACTIVE SIGNAL FOUND!
+2025-12-04 15:12:12 | INFO     | tradr |   Direction: BULLISH
+2025-12-04 15:12:12 | INFO     | tradr |   Confluence: 4/7
+2025-12-04 15:12:12 | INFO     | tradr |   Entry: 48.93500
+2025-12-04 15:12:12 | INFO     | tradr |   SL: 44.60946
+2025-12-04 15:12:12 | INFO     | tradr |   TP1: 51.53033
+2025-12-04 15:12:12 | INFO     | tradr |   TP2: 53.69310
+2025-12-04 15:12:12 | INFO     | tradr |   TP3: 56.72098
+2025-12-04 15:12:12 | WARNING  | tradr | [XAGUSD] Trade BLOCKED by risk manager: Challenge not active
+2025-12-04 15:12:12 | INFO     | tradr | [BTCUSD] Scanning...
+2025-12-04 15:12:12 | INFO     | tradr | [BTCUSD] BEARISH | Conf: 5/7 | Quality: 4 | Status: active
+2025-12-04 15:12:12 | INFO     | tradr | [BTCUSD] ACTIVE SIGNAL FOUND!
+2025-12-04 15:12:12 | INFO     | tradr |   Direction: BEARISH
+2025-12-04 15:12:12 | INFO     | tradr |   Confluence: 5/7
+2025-12-04 15:12:12 | INFO     | tradr |   Entry: 102711.10852
+2025-12-04 15:12:12 | INFO     | tradr |   SL: 118233.71518
+2025-12-04 15:12:13 | INFO     | tradr |   TP1: 93397.54453
+2025-12-04 15:12:13 | INFO     | tradr |   TP2: 85636.24120
+2025-12-04 15:12:13 | INFO     | tradr |   TP3: 74770.41654
+2025-12-04 15:12:13 | WARNING  | tradr | [BTCUSD] Trade BLOCKED by risk manager: Challenge not active
+2025-12-04 15:12:13 | INFO     | tradr | [ETHUSD] Scanning...
+2025-12-04 15:12:13 | INFO     | tradr | [ETHUSD] BULLISH | Conf: 5/7 | Quality: 4 | Status: active
+2025-12-04 15:12:13 | INFO     | tradr | [ETHUSD] ACTIVE SIGNAL FOUND!
+2025-12-04 15:12:13 | INFO     | tradr |   Direction: BULLISH
+2025-12-04 15:12:13 | INFO     | tradr |   Confluence: 5/7
+2025-12-04 15:12:13 | INFO     | tradr |   Entry: 3136.39000
+2025-12-04 15:12:13 | INFO     | tradr |   SL: 2530.05329
+2025-12-04 15:12:13 | INFO     | tradr |   TP1: 3500.19203
+2025-12-04 15:12:13 | INFO     | tradr |   TP2: 3803.36038
+2025-12-04 15:12:13 | INFO     | tradr |   TP3: 4227.79608
+2025-12-04 15:12:13 | WARNING  | tradr | [ETHUSD] Trade BLOCKED by risk manager: Challenge not active
+2025-12-04 15:12:14 | WARNING  | tradr | [US500] Symbol not available on this broker
+2025-12-04 15:12:14 | WARNING  | tradr | [US100] Symbol not available on this broker
+2025-12-04 15:12:14 | INFO     | tradr | ======================================================================
+2025-12-04 15:12:14 | INFO     | tradr | SCAN COMPLETE
+2025-12-04 15:12:14 | INFO     | tradr |   Symbols scanned: 34
+2025-12-04 15:12:14 | INFO     | tradr |   Active signals: 15
+2025-12-04 15:12:14 | INFO     | tradr |   Pending orders placed: 0
+2025-12-04 15:12:14 | INFO     | tradr |   Open positions: 0
+2025-12-04 15:12:14 | INFO     | tradr |   Pending orders: 0
+2025-12-04 15:12:14 | INFO     | tradr |   Tracked setups: 0
+2025-12-04 15:12:14 | INFO     | tradr |   Challenge Phase: 1
+2025-12-04 15:12:14 | INFO     | tradr |   Balance: $10,000.00
+2025-12-04 15:12:14 | INFO     | tradr |   Profit: +0.00% (Target: 10.0%)
+2025-12-04 15:12:14 | INFO     | tradr |   Daily DD: 0.00%/5%
+2025-12-04 15:12:14 | INFO     | tradr |   Max DD: 0.00%/10%
+2025-12-04 15:12:14 | INFO     | tradr |   Profitable Days: 0/0
+2025-12-04 15:12:14 | INFO     | tradr | ======================================================================
