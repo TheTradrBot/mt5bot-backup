@@ -286,8 +286,8 @@ class LiveTradingBot:
         log.info(f"  Entry: {entry:.5f}")
         log.info(f"  SL: {sl:.5f}")
         log.info(f"  TP1: {tp1:.5f}")
-        log.info(f"  TP2: {tp2:.5f if tp2 else 'N/A'}")
-        log.info(f"  TP3: {tp3:.5f if tp3 else 'N/A'}")
+        log.info(f"  TP2: {f'{tp2:.5f}' if tp2 else 'N/A'}")
+        log.info(f"  TP3: {f'{tp3:.5f}' if tp3 else 'N/A'}")
         
         return {
             "symbol": symbol,

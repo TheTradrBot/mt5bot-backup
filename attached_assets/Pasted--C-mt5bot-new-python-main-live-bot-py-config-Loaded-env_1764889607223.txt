@@ -1,0 +1,218 @@
+
+C:\mt5bot-new>python main_live_bot.py
+[config] ✓ Loaded environment from C:\mt5bot-new\.env
+2025-12-04 15:00:51 | INFO     | tradr | ======================================================================
+2025-12-04 15:00:51 | INFO     | tradr | TRADR BOT - LIVE TRADING (PENDING ORDER MODE)
+2025-12-04 15:00:51 | INFO     | tradr | ======================================================================
+2025-12-04 15:00:51 | INFO     | tradr | Using SAME strategy as backtests (strategy_core.py)
+2025-12-04 15:00:51 | INFO     | tradr | Now using PENDING ORDERS for exact backtest parity!
+2025-12-04 15:00:51 | INFO     | tradr | Server: FTMO-Demo
+2025-12-04 15:00:51 | INFO     | tradr | Login: 1512190437
+2025-12-04 15:00:51 | INFO     | tradr | Scan Interval: 4 hours
+2025-12-04 15:00:51 | INFO     | tradr | Validate Interval: 15 minutes
+2025-12-04 15:00:51 | INFO     | tradr | Strategy Mode: standard
+2025-12-04 15:00:51 | INFO     | tradr | Min Confluence: 4/7
+2025-12-04 15:00:51 | INFO     | tradr | Symbols: 34
+2025-12-04 15:00:51 | INFO     | tradr | ======================================================================
+2025-12-04 15:00:51 | INFO     | tradr | ======================================================================
+2025-12-04 15:00:51 | INFO     | tradr | CONNECTING TO MT5
+2025-12-04 15:00:51 | INFO     | tradr | ======================================================================
+[MT5] Connected: 1512190437 @ FTMO-Demo
+[MT5] Balance: $9,991.69, Equity: $9,991.69
+2025-12-04 15:00:51 | INFO     | tradr | Connected: 1512190437 @ FTMO-Demo
+2025-12-04 15:00:51 | INFO     | tradr | Balance: $9,991.69
+2025-12-04 15:00:51 | INFO     | tradr | Equity: $9,991.69
+2025-12-04 15:00:51 | INFO     | tradr | Leverage: 1:100
+2025-12-04 15:00:51 | INFO     | tradr | Starting trading loop...
+2025-12-04 15:00:51 | INFO     | tradr | Press Ctrl+C to stop
+2025-12-04 15:00:51 | INFO     | tradr | ======================================================================
+2025-12-04 15:00:51 | INFO     | tradr | MARKET SCAN - 2025-12-04 23:00 UTC
+2025-12-04 15:00:51 | INFO     | tradr | Strategy Mode: standard (Min Confluence: 4/7)
+2025-12-04 15:00:51 | INFO     | tradr | Using PENDING ORDERS (like backtest)
+2025-12-04 15:00:51 | INFO     | tradr | ======================================================================
+2025-12-04 15:00:51 | INFO     | tradr | [EURUSD] Scanning...
+2025-12-04 15:00:51 | INFO     | tradr | [EURUSD] BULLISH | Conf: 3/7 | Quality: 2 | Status: scan_only
+2025-12-04 15:00:51 | INFO     | tradr | [GBPUSD] Scanning...
+2025-12-04 15:00:52 | INFO     | tradr | [GBPUSD] BULLISH | Conf: 3/7 | Quality: 1 | Status: scan_only
+2025-12-04 15:00:52 | INFO     | tradr | [USDJPY] Scanning...
+2025-12-04 15:00:52 | INFO     | tradr | [USDJPY] BEARISH | Conf: 3/7 | Quality: 2 | Status: scan_only
+2025-12-04 15:00:53 | INFO     | tradr | [USDCHF] Scanning...
+2025-12-04 15:00:53 | INFO     | tradr | [USDCHF] BULLISH | Conf: 3/7 | Quality: 1 | Status: scan_only
+2025-12-04 15:00:54 | INFO     | tradr | [USDCAD] Scanning...
+2025-12-04 15:00:54 | INFO     | tradr | [USDCAD] BEARISH | Conf: 3/7 | Quality: 2 | Status: scan_only
+2025-12-04 15:00:54 | INFO     | tradr | [AUDUSD] Scanning...
+2025-12-04 15:00:55 | INFO     | tradr | [AUDUSD] BULLISH | Conf: 3/7 | Quality: 2 | Status: scan_only
+2025-12-04 15:00:55 | INFO     | tradr | [NZDUSD] Scanning...
+2025-12-04 15:00:55 | INFO     | tradr | [NZDUSD] BULLISH | Conf: 2/7 | Quality: 1 | Status: scan_only
+2025-12-04 15:00:56 | INFO     | tradr | [EURGBP] Scanning...
+2025-12-04 15:00:56 | INFO     | tradr | [EURGBP] BEARISH | Conf: 3/7 | Quality: 2 | Status: scan_only
+2025-12-04 15:00:56 | INFO     | tradr | [EURJPY] Scanning...
+2025-12-04 15:00:56 | INFO     | tradr | [EURJPY] BULLISH | Conf: 6/7 | Quality: 4 | Status: active
+2025-12-04 15:00:56 | INFO     | tradr | [EURJPY] ACTIVE SIGNAL FOUND!
+2025-12-04 15:00:56 | INFO     | tradr |   Direction: BULLISH
+2025-12-04 15:00:56 | INFO     | tradr |   Confluence: 6/7
+2025-12-04 15:00:56 | INFO     | tradr |   Entry: 178.10489
+2025-12-04 15:00:56 | INFO     | tradr |   SL: 175.21939
+2025-12-04 15:00:56 | INFO     | tradr |   TP1: 179.83619
+2025-12-04 15:00:56 | ERROR    | tradr | [EURJPY] Error during scan: Invalid format specifier '.5f if tp2 else 'N/A'' for object of type 'float'
+2025-12-04 15:00:56 | INFO     | tradr | [EURCHF] Scanning...
+2025-12-04 15:00:57 | INFO     | tradr | [EURCHF] BULLISH | Conf: 5/7 | Quality: 3 | Status: active
+2025-12-04 15:00:57 | INFO     | tradr | [EURCHF] ACTIVE SIGNAL FOUND!
+2025-12-04 15:00:57 | INFO     | tradr |   Direction: BULLISH
+2025-12-04 15:00:57 | INFO     | tradr |   Confluence: 5/7
+2025-12-04 15:00:57 | INFO     | tradr |   Entry: 0.92445
+2025-12-04 15:00:58 | INFO     | tradr |   SL: 0.91619
+2025-12-04 15:00:58 | INFO     | tradr |   TP1: 0.92941
+2025-12-04 15:00:58 | ERROR    | tradr | [EURCHF] Error during scan: Invalid format specifier '.5f if tp2 else 'N/A'' for object of type 'float'
+2025-12-04 15:00:58 | INFO     | tradr | [EURAUD] Scanning...
+2025-12-04 15:00:59 | INFO     | tradr | [EURAUD] BEARISH | Conf: 3/7 | Quality: 2 | Status: scan_only
+2025-12-04 15:00:59 | INFO     | tradr | [EURCAD] Scanning...
+2025-12-04 15:01:01 | INFO     | tradr | [EURCAD] BULLISH | Conf: 4/7 | Quality: 2 | Status: active
+2025-12-04 15:01:01 | INFO     | tradr | [EURCAD] ACTIVE SIGNAL FOUND!
+2025-12-04 15:01:01 | INFO     | tradr |   Direction: BULLISH
+2025-12-04 15:01:01 | INFO     | tradr |   Confluence: 4/7
+2025-12-04 15:01:01 | INFO     | tradr |   Entry: 1.62162
+2025-12-04 15:01:01 | INFO     | tradr |   SL: 1.61052
+2025-12-04 15:01:01 | INFO     | tradr |   TP1: 1.62828
+2025-12-04 15:01:01 | ERROR    | tradr | [EURCAD] Error during scan: Invalid format specifier '.5f if tp2 else 'N/A'' for object of type 'float'
+2025-12-04 15:01:01 | INFO     | tradr | [EURNZD] Scanning...
+2025-12-04 15:01:02 | INFO     | tradr | [EURNZD] BEARISH | Conf: 2/7 | Quality: 1 | Status: scan_only
+2025-12-04 15:01:02 | INFO     | tradr | [GBPJPY] Scanning...
+2025-12-04 15:01:03 | INFO     | tradr | [GBPJPY] BULLISH | Conf: 4/7 | Quality: 2 | Status: active
+2025-12-04 15:01:03 | INFO     | tradr | [GBPJPY] ACTIVE SIGNAL FOUND!
+2025-12-04 15:01:03 | INFO     | tradr |   Direction: BULLISH
+2025-12-04 15:01:03 | INFO     | tradr |   Confluence: 4/7
+2025-12-04 15:01:03 | INFO     | tradr |   Entry: 202.03331
+2025-12-04 15:01:03 | INFO     | tradr |   SL: 198.41446
+2025-12-04 15:01:03 | INFO     | tradr |   TP1: 204.20462
+2025-12-04 15:01:03 | ERROR    | tradr | [GBPJPY] Error during scan: Invalid format specifier '.5f if tp2 else 'N/A'' for object of type 'float'
+2025-12-04 15:01:03 | INFO     | tradr | [GBPCHF] Scanning...
+2025-12-04 15:01:04 | INFO     | tradr | [GBPCHF] BULLISH | Conf: 3/7 | Quality: 2 | Status: scan_only
+2025-12-04 15:01:04 | INFO     | tradr | [GBPAUD] Scanning...
+2025-12-04 15:01:06 | INFO     | tradr | [GBPAUD] BEARISH | Conf: 3/7 | Quality: 2 | Status: scan_only
+2025-12-04 15:01:06 | INFO     | tradr | [GBPCAD] Scanning...
+2025-12-04 15:01:07 | INFO     | tradr | [GBPCAD] BULLISH | Conf: 4/7 | Quality: 2 | Status: active
+2025-12-04 15:01:07 | INFO     | tradr | [GBPCAD] ACTIVE SIGNAL FOUND!
+2025-12-04 15:01:07 | INFO     | tradr |   Direction: BULLISH
+2025-12-04 15:01:07 | INFO     | tradr |   Confluence: 4/7
+2025-12-04 15:01:07 | INFO     | tradr |   Entry: 1.84388
+2025-12-04 15:01:07 | INFO     | tradr |   SL: 1.82774
+2025-12-04 15:01:07 | INFO     | tradr |   TP1: 1.85357
+2025-12-04 15:01:07 | ERROR    | tradr | [GBPCAD] Error during scan: Invalid format specifier '.5f if tp2 else 'N/A'' for object of type 'float'
+2025-12-04 15:01:07 | INFO     | tradr | [GBPNZD] Scanning...
+2025-12-04 15:01:07 | INFO     | tradr | [GBPNZD] BEARISH | Conf: 3/7 | Quality: 2 | Status: scan_only
+2025-12-04 15:01:08 | INFO     | tradr | [AUDJPY] Scanning...
+2025-12-04 15:01:08 | INFO     | tradr | [AUDJPY] BULLISH | Conf: 5/7 | Quality: 3 | Status: active
+2025-12-04 15:01:08 | INFO     | tradr | [AUDJPY] ACTIVE SIGNAL FOUND!
+2025-12-04 15:01:08 | INFO     | tradr |   Direction: BULLISH
+2025-12-04 15:01:08 | INFO     | tradr |   Confluence: 5/7
+2025-12-04 15:01:08 | INFO     | tradr |   Entry: 100.22127
+2025-12-04 15:01:08 | INFO     | tradr |   SL: 98.40157
+2025-12-04 15:01:08 | INFO     | tradr |   TP1: 101.31308
+2025-12-04 15:01:08 | ERROR    | tradr | [AUDJPY] Error during scan: Invalid format specifier '.5f if tp2 else 'N/A'' for object of type 'float'
+2025-12-04 15:01:08 | INFO     | tradr | [AUDCHF] Scanning...
+2025-12-04 15:01:09 | INFO     | tradr | [AUDCHF] BULLISH | Conf: 4/7 | Quality: 3 | Status: active
+2025-12-04 15:01:09 | INFO     | tradr | [AUDCHF] ACTIVE SIGNAL FOUND!
+2025-12-04 15:01:09 | INFO     | tradr |   Direction: BULLISH
+2025-12-04 15:01:09 | INFO     | tradr |   Confluence: 4/7
+2025-12-04 15:01:09 | INFO     | tradr |   Entry: 0.51638
+2025-12-04 15:01:09 | INFO     | tradr |   SL: 0.50582
+2025-12-04 15:01:09 | INFO     | tradr |   TP1: 0.52271
+2025-12-04 15:01:09 | ERROR    | tradr | [AUDCHF] Error during scan: Invalid format specifier '.5f if tp2 else 'N/A'' for object of type 'float'
+2025-12-04 15:01:10 | INFO     | tradr | [AUDCAD] Scanning...
+2025-12-04 15:01:11 | INFO     | tradr | [AUDCAD] BULLISH | Conf: 3/7 | Quality: 2 | Status: scan_only
+2025-12-04 15:01:11 | INFO     | tradr | [AUDNZD] Scanning...
+2025-12-04 15:01:12 | INFO     | tradr | [AUDNZD] BULLISH | Conf: 4/7 | Quality: 3 | Status: active
+2025-12-04 15:01:12 | INFO     | tradr | [AUDNZD] ACTIVE SIGNAL FOUND!
+2025-12-04 15:01:12 | INFO     | tradr |   Direction: BULLISH
+2025-12-04 15:01:12 | INFO     | tradr |   Confluence: 4/7
+2025-12-04 15:01:12 | INFO     | tradr |   Entry: 1.14189
+2025-12-04 15:01:12 | INFO     | tradr |   SL: 1.12572
+2025-12-04 15:01:12 | INFO     | tradr |   TP1: 1.15159
+2025-12-04 15:01:12 | ERROR    | tradr | [AUDNZD] Error during scan: Invalid format specifier '.5f if tp2 else 'N/A'' for object of type 'float'
+2025-12-04 15:01:12 | INFO     | tradr | [NZDJPY] Scanning...
+2025-12-04 15:01:12 | INFO     | tradr | [NZDJPY] BULLISH | Conf: 4/7 | Quality: 3 | Status: active
+2025-12-04 15:01:12 | INFO     | tradr | [NZDJPY] ACTIVE SIGNAL FOUND!
+2025-12-04 15:01:12 | INFO     | tradr |   Direction: BULLISH
+2025-12-04 15:01:12 | INFO     | tradr |   Confluence: 4/7
+2025-12-04 15:01:12 | INFO     | tradr |   Entry: 86.68544
+2025-12-04 15:01:12 | INFO     | tradr |   SL: 84.99028
+2025-12-04 15:01:12 | INFO     | tradr |   TP1: 87.70253
+2025-12-04 15:01:12 | ERROR    | tradr | [NZDJPY] Error during scan: Invalid format specifier '.5f if tp2 else 'N/A'' for object of type 'float'
+2025-12-04 15:01:12 | INFO     | tradr | [NZDCHF] Scanning...
+2025-12-04 15:01:13 | INFO     | tradr | [NZDCHF] BULLISH | Conf: 4/7 | Quality: 2 | Status: active
+2025-12-04 15:01:13 | INFO     | tradr | [NZDCHF] ACTIVE SIGNAL FOUND!
+2025-12-04 15:01:13 | INFO     | tradr |   Direction: BULLISH
+2025-12-04 15:01:13 | INFO     | tradr |   Confluence: 4/7
+2025-12-04 15:01:13 | INFO     | tradr |   Entry: 0.45809
+2025-12-04 15:01:13 | INFO     | tradr |   SL: 0.44553
+2025-12-04 15:01:13 | INFO     | tradr |   TP1: 0.46562
+2025-12-04 15:01:13 | ERROR    | tradr | [NZDCHF] Error during scan: Invalid format specifier '.5f if tp2 else 'N/A'' for object of type 'float'
+2025-12-04 15:01:13 | INFO     | tradr | [NZDCAD] Scanning...
+2025-12-04 15:01:14 | INFO     | tradr | [NZDCAD] BULLISH | Conf: 3/7 | Quality: 2 | Status: scan_only
+2025-12-04 15:01:15 | INFO     | tradr | [CADJPY] Scanning...
+2025-12-04 15:01:18 | INFO     | tradr | [CADJPY] BULLISH | Conf: 4/7 | Quality: 3 | Status: active
+2025-12-04 15:01:18 | INFO     | tradr | [CADJPY] ACTIVE SIGNAL FOUND!
+2025-12-04 15:01:18 | INFO     | tradr |   Direction: BULLISH
+2025-12-04 15:01:18 | INFO     | tradr |   Confluence: 4/7
+2025-12-04 15:01:18 | INFO     | tradr |   Entry: 109.75900
+2025-12-04 15:01:18 | INFO     | tradr |   SL: 107.81901
+2025-12-04 15:01:18 | INFO     | tradr |   TP1: 110.92299
+2025-12-04 15:01:18 | ERROR    | tradr | [CADJPY] Error during scan: Invalid format specifier '.5f if tp2 else 'N/A'' for object of type 'float'
+2025-12-04 15:01:18 | INFO     | tradr | [CADCHF] Scanning...
+2025-12-04 15:01:20 | INFO     | tradr | [CADCHF] BULLISH | Conf: 3/7 | Quality: 1 | Status: scan_only
+2025-12-04 15:01:21 | INFO     | tradr | [CHFJPY] Scanning...
+2025-12-04 15:01:24 | INFO     | tradr | [CHFJPY] BEARISH | Conf: 4/7 | Quality: 3 | Status: active
+2025-12-04 15:01:24 | INFO     | tradr | [CHFJPY] ACTIVE SIGNAL FOUND!
+2025-12-04 15:01:24 | INFO     | tradr |   Direction: BEARISH
+2025-12-04 15:01:24 | INFO     | tradr |   Confluence: 4/7
+2025-12-04 15:01:24 | INFO     | tradr |   Entry: 192.98100
+2025-12-04 15:01:24 | INFO     | tradr |   SL: 196.28436
+2025-12-04 15:01:24 | INFO     | tradr |   TP1: 190.99898
+2025-12-04 15:01:24 | ERROR    | tradr | [CHFJPY] Error during scan: Invalid format specifier '.5f if tp2 else 'N/A'' for object of type 'float'
+2025-12-04 15:01:24 | INFO     | tradr | [XAUUSD] Scanning...
+2025-12-04 15:01:24 | INFO     | tradr | [XAUUSD] BULLISH | Conf: 3/7 | Quality: 2 | Status: scan_only
+2025-12-04 15:01:25 | INFO     | tradr | [XAGUSD] Scanning...
+2025-12-04 15:01:27 | INFO     | tradr | [XAGUSD] BULLISH | Conf: 4/7 | Quality: 3 | Status: active
+2025-12-04 15:01:27 | INFO     | tradr | [XAGUSD] ACTIVE SIGNAL FOUND!
+2025-12-04 15:01:27 | INFO     | tradr |   Direction: BULLISH
+2025-12-04 15:01:27 | INFO     | tradr |   Confluence: 4/7
+2025-12-04 15:01:27 | INFO     | tradr |   Entry: 48.93500
+2025-12-04 15:01:27 | INFO     | tradr |   SL: 44.54223
+2025-12-04 15:01:27 | INFO     | tradr |   TP1: 51.57067
+2025-12-04 15:01:27 | ERROR    | tradr | [XAGUSD] Error during scan: Invalid format specifier '.5f if tp2 else 'N/A'' for object of type 'float'
+2025-12-04 15:01:27 | INFO     | tradr | [BTCUSD] Scanning...
+2025-12-04 15:01:30 | INFO     | tradr | [BTCUSD] BEARISH | Conf: 5/7 | Quality: 4 | Status: active
+2025-12-04 15:01:30 | INFO     | tradr | [BTCUSD] ACTIVE SIGNAL FOUND!
+2025-12-04 15:01:30 | INFO     | tradr |   Direction: BEARISH
+2025-12-04 15:01:30 | INFO     | tradr |   Confluence: 5/7
+2025-12-04 15:01:30 | INFO     | tradr |   Entry: 102711.10852
+2025-12-04 15:01:30 | INFO     | tradr |   SL: 118233.71518
+2025-12-04 15:01:30 | INFO     | tradr |   TP1: 93397.54453
+2025-12-04 15:01:30 | ERROR    | tradr | [BTCUSD] Error during scan: Invalid format specifier '.5f if tp2 else 'N/A'' for object of type 'float'
+2025-12-04 15:01:30 | INFO     | tradr | [ETHUSD] Scanning...
+2025-12-04 15:01:33 | INFO     | tradr | [ETHUSD] BULLISH | Conf: 5/7 | Quality: 4 | Status: active
+2025-12-04 15:01:33 | INFO     | tradr | [ETHUSD] ACTIVE SIGNAL FOUND!
+2025-12-04 15:01:33 | INFO     | tradr |   Direction: BULLISH
+2025-12-04 15:01:33 | INFO     | tradr |   Confluence: 5/7
+2025-12-04 15:01:33 | INFO     | tradr |   Entry: 3135.17000
+2025-12-04 15:01:33 | INFO     | tradr |   SL: 2530.05329
+2025-12-04 15:01:33 | INFO     | tradr |   TP1: 3498.24003
+2025-12-04 15:01:33 | ERROR    | tradr | [ETHUSD] Error during scan: Invalid format specifier '.5f if tp2 else 'N/A'' for object of type 'float'
+2025-12-04 15:01:33 | WARNING  | tradr | [US500] Symbol not available on this broker
+2025-12-04 15:01:33 | WARNING  | tradr | [US100] Symbol not available on this broker
+2025-12-04 15:01:33 | INFO     | tradr | ======================================================================
+2025-12-04 15:01:33 | INFO     | tradr | SCAN COMPLETE
+2025-12-04 15:01:33 | INFO     | tradr |   Symbols scanned: 34
+2025-12-04 15:01:33 | INFO     | tradr |   Active signals: 0
+2025-12-04 15:01:33 | INFO     | tradr |   Pending orders placed: 0
+2025-12-04 15:01:33 | INFO     | tradr |   Open positions: 0
+2025-12-04 15:01:33 | INFO     | tradr |   Pending orders: 0
+2025-12-04 15:01:33 | INFO     | tradr |   Tracked setups: 0
+2025-12-04 15:01:33 | INFO     | tradr |   Challenge Phase: 1
+2025-12-04 15:01:33 | INFO     | tradr |   Balance: $10,000.00
+2025-12-04 15:01:33 | INFO     | tradr |   Profit: +0.00% (Target: 10.0%)
+2025-12-04 15:01:33 | INFO     | tradr |   Daily DD: 0.00%/5%
+2025-12-04 15:01:33 | INFO     | tradr |   Max DD: 0.00%/10%
+2025-12-04 15:01:33 | INFO     | tradr |   Profitable Days: 0/0
+2025-12-04 15:01:33 | INFO     | tradr | =====================================================================
