@@ -759,14 +759,28 @@ async def backtest_cmd(interaction: discord.Interaction, period: str, asset: str
         # Multi-asset backtest (when no specific asset provided)
         all_assets = FOREX_PAIRS + METALS + INDICES + CRYPTO_ASSETS
         
+        # Send initial progress message
+        await interaction.followup.send(
+            f"**Multi-Asset Backtest Starting**\n"
+            f"Testing all {len(all_assets)} configured assets for: {period}\n"
+            f"This may take a few moments..."
+        )
+        
         all_results = []
         total_trades_all = 0
         total_wins_all = 0
         total_r_all = 0.0
         
-        for asset_sym in all_assets[:10]:  # Limit to first 10 to avoid timeout
+        # Process all 32 assets
+        for i, asset_sym in enumerate(all_assets, 1):
             try:
-                result = run_backtest(asset_sym, period)
+                # Send progress update every 8 assets
+                if i % 8 == 0:
+                    await interaction.followup.send(
+                        f"Progress: {i}/{len(all_assets)} assets scanned..."
+                    )
+                
+                result = await asyncio.to_thread(run_backtest, asset_sym, period)
                 
                 total_trades = result.get('total_trades', 0)
                 if total_trades > 0:
@@ -811,10 +825,14 @@ async def backtest_cmd(interaction: discord.Interaction, period: str, asset: str
         
         min_conf = 4 if SIGNAL_MODE == "standard" else 3
         
+        assets_with_trades = len(all_results)
+        assets_tested = len(all_assets)
+        
         msg = (
             f"**Multi-Asset Backtest Results** - 5ers High Stakes 10K\n\n"
             f"**Period:** {period}\n"
-            f"**Assets Tested:** {len(all_results)}\n"
+            f"**Assets Scanned:** {assets_tested} (all configured)\n"
+            f"**Assets with Trades:** {assets_with_trades}\n"
             f"**Min Confluence:** {min_conf}/7 (mode: {SIGNAL_MODE})\n\n"
             f"**Combined Performance:**\n"
             f"Total Trades: {total_trades_all}\n"
