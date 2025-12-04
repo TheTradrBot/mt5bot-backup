@@ -1,5 +1,5 @@
 """
-Risk Management module for 5%ers High Stakes Challenge.
+Risk Management module for FTMO Challenge.
 
 Implements pre-trade drawdown simulation to prevent rule breaches.
 """

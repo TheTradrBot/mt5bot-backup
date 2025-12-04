@@ -1,5 +1,5 @@
 """
-Position Sizing for 5%ers 10K High Stakes Account.
+Position Sizing for FTMO Challenge Account.
 
 Calculates lot sizes based on risk parameters and contract specifications.
 """

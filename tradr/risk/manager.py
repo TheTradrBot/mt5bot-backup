@@ -1,5 +1,5 @@
 """
-Risk Manager for 5%ers High Stakes Challenge.
+Risk Manager for FTMO Challenge.
 
 Implements pre-trade drawdown simulation to prevent rule breaches.
 All risk checks happen BEFORE a trade is placed.
@@ -45,15 +45,15 @@ class DailyRecord:
     
     @property
     def is_profitable(self) -> bool:
-        """Check if day qualifies as profitable (0.5%+ of initial balance)."""
-        threshold = 10000 * 0.005
+        """Check if day qualifies as profitable (FTMO has no minimum threshold)."""
+        threshold = 10000 * 0.0
         return self.pnl_usd >= threshold
 
 
 @dataclass
 class ChallengeState:
     """
-    Persistent state for 5%ers challenge tracking.
+    Persistent state for FTMO challenge tracking.
     Saved to JSON file for persistence across restarts.
     """
     phase: int = 1
@@ -116,7 +116,7 @@ class ChallengeState:
     @property
     def target_pct(self) -> float:
         """Target profit percentage for current phase."""
-        return 8.0 if self.phase == 1 else 5.0
+        return 10.0 if self.phase == 1 else 5.0
     
     @property
     def progress_pct(self) -> float:
@@ -141,7 +141,7 @@ class RiskCheckResult:
 
 class RiskManager:
     """
-    Risk manager for 5%ers High Stakes challenge.
+    Risk manager for FTMO Challenge.
     
     Key features:
     - Pre-trade simulation: Calculates worst-case DD if all SLs hit
@@ -152,12 +152,12 @@ class RiskManager:
     
     MAX_DAILY_LOSS_PCT = 5.0
     MAX_TOTAL_DRAWDOWN_PCT = 10.0
-    MIN_PROFITABLE_DAY_PCT = 0.5
-    PHASE1_TARGET_PCT = 8.0
+    MIN_PROFITABLE_DAY_PCT = 0.0
+    PHASE1_TARGET_PCT = 10.0
     PHASE2_TARGET_PCT = 5.0
-    MIN_PROFITABLE_DAYS = 3
+    MIN_PROFITABLE_DAYS = 0
     
-    DEFAULT_RISK_PCT = 0.0075
+    DEFAULT_RISK_PCT = 0.01
     
     def __init__(self, state_file: str = "challenge_state.json"):
         self.state_file = Path(state_file)
