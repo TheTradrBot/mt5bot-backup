@@ -1,0 +1,70 @@
+You are an elite autonomous trading bot fixer with maximum autonomy. Your task is to completely overhaul and upgrade the current Python trading bot (MT5/MetaTrader 5 + possibly ccxt or broker API) so that it passes FTMO/MyForexFunds/5%ers 2-step challenges with flying colors, without ever breaching any rule.
+
+Here is the current situation (screenshot provided in previous message):
+- Account size: ~10,000 EUR
+- Multiple open positions + many pending limit orders
+- One single ETHUSD trade alone has an $800+ potential stop-loss = already >5% daily loss limit if hit
+- Current bot closes ENTIRE position at TP1 → terrible risk/reward in multi-trade scenarios
+- Too many overlapping trades and limits → high chance of breaching max daily loss (-5%) or max overall drawdown (-10%/-12%)
+
+CORE OBJECTIVE (NON-NEGOTIABLE):
+Pass the 2-step challenge as fast and safely as possible with maximum possible profit while NEVER breaching a single rule.
+
+RULES THAT MUST BE ENFORCED 100% OF THE TIME (FTMO standard):
+1. Daily Loss Limit: ≤ 5% of starting balance of the day
+2. Overall Max Drawdown: ≤ 10% (trailing from highest equity, some firms 12%)
+3. No martingale, no grid without strict total exposure control
+4. Must reach +10% profit in Phase 1, +5% in Phase 2
+
+YOUR MISSION — Implement ALL of the following upgrades autonomously:
+
+1. **Global Risk Controller (Top Priority)**
+   - Real-time tracking of current daily P/L and total floating P/L
+   - If closing a trade at current stop-loss would make daily loss ≥ 4.8%, immediately move SL to breakeven or close part/all of the position
+   - If total floating loss approaches -8% equity → emergency hedge or full close of worst positions
+
+2. **Dynamic Position Sizing & Partial Scaling Out**
+   - Never risk more than 0.7–1% per individual trade
+   - Split every trade into 3–4 partial closes:
+     → TP1: 40–50% of position at +0.8R–1R
+     → TP2: 30% at +2R
+     → TP3: 20–30% at +3–4R or trailing
+   - Keep SL on remaining lots but move to breakeven + small buffer after TP1 hit
+
+3. **Smart Concurrent Trade Limit**
+   - Maximum 4–6 trades open at once
+   - If already 4+ trades open, cancel all pending limits until ≤3 open
+   - Total risk across all open trades never exceeds 3.5–4%
+
+4. **Pending Order Management**
+   - Cancel any buy/sell limit that would cause total risk > 3.5% if filled
+   - Auto-cancel limits older than X hours if price moved away
+
+5. **Live Equity Protection Loop (runs every 30–60 seconds)**
+   - Calculate current equity vs highest equity
+   - If drawdown from peak > 8% → close worst 1–2 trades + move all SLs to breakeven
+   - If daily loss > 4% → flatten everything and pause trading until next day
+
+6. **Challenge-Optimized Behavior (exactly like top /challenge Discord bots)**
+   - Aggressive when daily drawdown < 2% → normal sizing
+   - Conservative when daily drawdown > 2.5% → halve lot sizes
+   - Super-conservative when > 4% daily loss hit today → no new trades until reset
+   - After +8% profit in phase → switch to ultra-safe mode (0.3% risk max, only high-probability setups)
+
+7. **DO NOT touch the core entry logic**
+   - Keep whatever strategy is currently finding setups (breakouts, pullbacks, etc.) 100% intact
+   - Only add risk/management layers on top
+
+8. **Code Requirements**
+   - Work with existing MT5 code structure (Magic numbers, ticket tracking, etc.)
+   - Add a new module/file called `challenge_risk_manager.py`
+   - Use locking / threading safely
+   - Extensive logging of every safety action taken
+
+Deliverables (generate full working code):
+- Complete upgraded bot with all safety layers
+- Clear comments explaining every protection mechanism
+- Config section at top where I can toggle "Challenge Mode = True"
+- When Challenge Mode = True → all the above rules activate automatically
+
+Start fixing now with maximum autonomy. Output the full corrected and upgraded code ready to run on Replit + MT5.
