@@ -57,8 +57,8 @@ OANDA_TO_FTMO: Dict[str, str] = {
     "ETH_USD": "ETHUSD",
     
     # ============ INDICES (2) ============
-    "SPX500_USD": "US500",
-    "NAS100_USD": "US100",
+    "SPX500_USD": "US500.cash",
+    "NAS100_USD": "US100.cash",
 }
 
 FTMO_TO_OANDA: Dict[str, str] = {v: k for k, v in OANDA_TO_FTMO.items()}
@@ -81,7 +81,7 @@ ALL_CRYPTO_OANDA: List[str] = ["BTC_USD", "ETH_USD"]
 ALL_CRYPTO_FTMO: List[str] = ["BTCUSD", "ETHUSD"]
 
 ALL_INDICES_OANDA: List[str] = ["SPX500_USD", "NAS100_USD"]
-ALL_INDICES_FTMO: List[str] = ["US500", "US100"]
+ALL_INDICES_FTMO: List[str] = ["US500.cash", "US100.cash"]
 
 ALL_TRADABLE_OANDA: List[str] = (
     ALL_FOREX_PAIRS_OANDA + ALL_METALS_OANDA + ALL_CRYPTO_OANDA + ALL_INDICES_OANDA
@@ -165,7 +165,7 @@ def print_summary():
     
     print(f"\nIndices: {len(ALL_INDICES_OANDA)}")
     for oanda, ftmo in zip(ALL_INDICES_OANDA, ALL_INDICES_FTMO):
-        print(f"      {oanda:10s} -> {ftmo}")
+        print(f"      {oanda:15s} -> {ftmo}")
     
     print(f"\nTotal: {len(ALL_TRADABLE_OANDA)} symbols")
     print("=" * 60)
