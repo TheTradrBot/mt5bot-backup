@@ -64,25 +64,26 @@ See `symbol_mapping.py` for complete mapping between OANDA and FTMO formats.
 ### Directory Structure
 ```
 /
-├── main_live_bot.py      # Standalone 24/7 trading bot (Windows VM)
-├── discord_minimal.py    # Minimal Discord monitoring bot
-├── strategy_core.py      # CORE STRATEGY - Single source of truth
-├── symbol_mapping.py     # OANDA <-> FTMO symbol mapping
-├── backtest.py           # Backtest engine using strategy_core
-├── challenge_rules.py    # FTMO rules and tracking
-├── config.py             # Configuration settings
-├── data.py               # OANDA data source
-├── tradr/                # Modular package
-│   ├── strategy/         # Re-exports from strategy_core.py
-│   ├── risk/             # Risk manager with DD simulation
-│   ├── mt5/              # MT5 client (direct + bridge)
-│   ├── data/             # Dukascopy + OANDA clients
-│   └── utils/            # Logging, state management
-├── scripts/              # Deployment scripts
-│   ├── deploy.ps1        # Windows VM deployment
-│   ├── update_rollback.ps1  # Update/rollback helper
-│   └── compare.py        # Backtest vs MT5 parity check
-└── logs/                 # Log files
+├── main_live_bot.py          # Standalone 24/7 trading bot (Windows VM)
+├── challenge_risk_manager.py # Elite 7-layer risk management for challenges
+├── discord_minimal.py        # Minimal Discord monitoring bot
+├── strategy_core.py          # CORE STRATEGY - Single source of truth
+├── symbol_mapping.py         # OANDA <-> FTMO symbol mapping
+├── backtest.py               # Backtest engine using strategy_core
+├── challenge_rules.py        # FTMO rules and tracking
+├── config.py                 # Configuration settings
+├── data.py                   # OANDA data source
+├── tradr/                    # Modular package
+│   ├── strategy/             # Re-exports from strategy_core.py
+│   ├── risk/                 # Risk manager with DD simulation
+│   ├── mt5/                  # MT5 client (direct + bridge)
+│   ├── data/                 # Dukascopy + OANDA clients
+│   └── utils/                # Logging, state management
+├── scripts/                  # Deployment scripts
+│   ├── deploy.ps1            # Windows VM deployment
+│   ├── update_rollback.ps1   # Update/rollback helper
+│   └── compare.py            # Backtest vs MT5 parity check
+└── logs/                     # Log files
 ```
 
 ### Strategy (7 Confluence Pillars)
@@ -112,10 +113,50 @@ The strategy evaluates setups across these pillars:
 - Profit Target: **5%** ($500 on $10K)
 - Same DD rules as Challenge Phase
 
-### Risk Management
+### Risk Management (Standard Mode)
 - Risk per trade: **1%** of account
 - Lot reduction: Halved for each open position
 - Pre-trade DD simulation: Blocks trades that would breach limits
+
+### Challenge Mode Elite Protection (CHALLENGE_MODE=True)
+When enabled, the bot uses a 7-layer safety system designed to maximize challenge pass rates:
+
+**Layer 1: Global Risk Controller**
+- Real-time P/L tracking every 30 seconds
+- Proactive SL adjustment to protect profits
+- Emergency close at 4.5% daily loss or 8% total DD
+
+**Layer 2: Dynamic Position Sizing**
+- Base risk: 0.75% per trade (reduced from 1%)
+- Adaptive sizing based on current drawdown
+- Partial scaling: 45% TP1, 30% TP2, 25% TP3
+
+**Layer 3: Smart Concurrent Trade Limit**
+- Max 5 open positions at any time
+- Max 6 pending orders
+- Auto-cancel excess orders when limits approached
+
+**Layer 4: Pending Order Management**
+- Risk-based cancellation when DD approaches limits
+- Time-based cleanup (orders expire after 24 hours)
+- Pending risk included in cumulative exposure
+
+**Layer 5: Live Equity Protection Loop**
+- 30-second monitoring cycle
+- Automatic execution of protective actions
+- CLOSE_ALL, CANCEL_PENDING, MOVE_SL_BREAKEVEN
+
+**Layer 6: Challenge-Optimized Behavior**
+- **Aggressive Mode** (DD < 2%): Full 0.75% risk
+- **Normal Mode** (DD 2-4%): 0.75% risk
+- **Conservative Mode** (DD 4-6%): 0.5% risk
+- **Ultra-Safe Mode** (DD 6-8%): 0.25% risk
+- **Halted Mode** (DD > 8%): No new trades
+
+**Layer 7: Core Strategy Integration**
+- Uses challenge manager for trade approval
+- Core entry logic (7 confluence pillars) unchanged
+- Safety layers wrap around existing strategy
 
 ## Environment Variables
 
@@ -175,6 +216,19 @@ Start-ScheduledTask -TaskName TradrLive
 ## Recent Changes
 
 ### December 2024
+- **NEW**: Added `challenge_risk_manager.py` - Elite 7-layer safety system for FTMO challenges
+  - Global Risk Controller with real-time P/L tracking every 30 seconds
+  - Dynamic Position Sizing: 0.75% base risk, adaptive to drawdown level
+  - Smart Concurrent Trade Limit: Max 5 open, 6 pending orders
+  - Pending Order Management: Risk-based cancellation, time-based cleanup
+  - Live Equity Protection Loop: 30-second monitoring with auto-actions
+  - Challenge-Optimized Behavior: 5 risk modes (Aggressive/Normal/Conservative/Ultra-Safe/Halted)
+  - Integration wrapper around core strategy (no changes to entry logic)
+  - Partial scaling: 45% TP1, 30% TP2, 25% TP3 (optimized for profit capture)
+- Updated `main_live_bot.py` with CHALLENGE_MODE toggle
+  - `execute_protection_actions()` for automatic safety actions
+  - Integrated halted status check in main loop
+  - Pending risk now included in cumulative exposure calculations
 - Updated for FTMO Challenge rules (10% target Phase 1, 5% Phase 2)
 - Added symbol mapping for OANDA -> FTMO MT5 conversion
 - Expanded to 34 tradable symbols (28 forex, 2 metals, 2 crypto, 2 indices)

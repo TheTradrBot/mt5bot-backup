@@ -46,6 +46,9 @@ from strategy_core import (
 from tradr.mt5.client import MT5Client, PendingOrder
 from tradr.risk.manager import RiskManager
 from tradr.utils.logger import setup_logger
+from challenge_risk_manager import ChallengeRiskManager, ChallengeConfig, RiskMode, ActionType, create_challenge_manager
+
+CHALLENGE_MODE = True
 
 
 @dataclass
@@ -125,6 +128,9 @@ class LiveTradingBot:
         self.last_validate_time: Optional[datetime] = None
         self.scan_count = 0
         self.pending_setups: Dict[str, PendingSetup] = {}
+        
+        self.challenge_manager: Optional[ChallengeRiskManager] = None
+        
         self._load_pending_setups()
         self._auto_start_challenge()
     
@@ -182,6 +188,34 @@ class LiveTradingBot:
             log.info("Syncing risk manager with MT5 account...")
             self.risk_manager.sync_from_mt5(balance, equity)
             log.info(f"Risk manager synced: Balance=${balance:,.2f}, Equity=${equity:,.2f}")
+            
+            if CHALLENGE_MODE:
+                log.info("Initializing Challenge Risk Manager (ELITE PROTECTION)...")
+                config = ChallengeConfig(
+                    enabled=True,
+                    phase=self.risk_manager.state.phase,
+                    account_size=balance,
+                    max_risk_per_trade_pct=0.75,
+                    max_cumulative_risk_pct=3.5,
+                    max_concurrent_trades=5,
+                    max_pending_orders=6,
+                    tp1_close_pct=0.45,
+                    tp2_close_pct=0.30,
+                    tp3_close_pct=0.25,
+                    daily_loss_warning_pct=2.5,
+                    daily_loss_reduce_pct=3.5,
+                    daily_loss_halt_pct=4.5,
+                    total_dd_warning_pct=5.0,
+                    total_dd_emergency_pct=8.0,
+                    protection_loop_interval_sec=30.0,
+                )
+                self.challenge_manager = ChallengeRiskManager(
+                    config=config,
+                    mt5_client=self.mt5,
+                    state_file="challenge_risk_state.json",
+                )
+                self.challenge_manager.sync_with_mt5(balance, equity)
+                log.info("Challenge Risk Manager initialized with ELITE PROTECTION")
         
         return True
     
@@ -367,22 +401,37 @@ class LiveTradingBot:
                 log.info(f"[{symbol}] Already have pending setup at {existing.entry_price:.5f}, skipping")
                 return False
         
-        pending_orders_risk = self._calculate_pending_orders_risk()
-        log.info(f"[{symbol}] Current pending orders risk: ${pending_orders_risk:.2f}")
-        
-        risk_check = self.risk_manager.check_trade(
-            symbol=symbol,
-            direction=direction,
-            entry_price=entry,
-            stop_loss_price=sl,
-            pending_orders_risk=pending_orders_risk,
-        )
-        
-        if not risk_check.allowed:
-            log.warning(f"[{symbol}] Trade BLOCKED by risk manager: {risk_check.reason}")
-            return False
-        
-        lot_size = risk_check.adjusted_lot
+        if CHALLENGE_MODE and self.challenge_manager:
+            allowed, lot_size, reason = self.challenge_manager.check_trade_allowed(
+                symbol=symbol,
+                direction=direction,
+                entry_price=entry,
+                stop_loss_price=sl,
+            )
+            
+            if not allowed:
+                log.warning(f"[{symbol}] Trade BLOCKED by Challenge Risk Manager: {reason}")
+                return False
+            
+            log.info(f"[{symbol}] Challenge Mode: {reason}")
+            log.info(f"[{symbol}] Risk Mode: {self.challenge_manager.current_mode.value}")
+        else:
+            pending_orders_risk = self._calculate_pending_orders_risk()
+            log.info(f"[{symbol}] Current pending orders risk: ${pending_orders_risk:.2f}")
+            
+            risk_check = self.risk_manager.check_trade(
+                symbol=symbol,
+                direction=direction,
+                entry_price=entry,
+                stop_loss_price=sl,
+                pending_orders_risk=pending_orders_risk,
+            )
+            
+            if not risk_check.allowed:
+                log.warning(f"[{symbol}] Trade BLOCKED by risk manager: {risk_check.reason}")
+                return False
+            
+            lot_size = risk_check.adjusted_lot
         
         log.info(f"[{symbol}] Placing PENDING ORDER (like backtest):")
         log.info(f"  Direction: {direction.upper()}")
@@ -391,11 +440,6 @@ class LiveTradingBot:
         log.info(f"  TP1: {tp1:.5f}")
         log.info(f"  Lot Size: {lot_size}")
         log.info(f"  Expiration: 24 hours")
-        
-        if risk_check.original_lot != risk_check.adjusted_lot:
-            log.info(f"  (Lot reduced from {risk_check.original_lot:.2f} - {risk_check.reason})")
-        
-        log.info(f"  Simulated DD after trade: Daily {risk_check.daily_loss_after:.1f}%, Max {risk_check.max_drawdown_after:.1f}%")
         
         result = self.mt5.place_pending_order(
             symbol=symbol,
@@ -739,10 +783,16 @@ class LiveTradingBot:
         """
         Manage partial take profits for active positions.
         
-        Strategy:
+        Challenge Mode Strategy (FTMO Optimized):
+        - TP1 hit: Close 45% of position volume at +0.8-1R
+        - TP2 hit: Close 30% at +2R
+        - TP3 hit: Close remaining 25% at +3-4R or trailing
+        - Move SL to breakeven + buffer after TP1
+        
+        Standard Mode:
         - TP1 hit: Close 33% of position volume
-        - TP2 hit: Close 50% of remaining (another 33% of original)
-        - TP3 hit or SL hit: Close remainder
+        - TP2 hit: Close 50% of remaining
+        - TP3 hit: Close remainder
         
         Tracks partial close state in pending_setups.
         """
@@ -788,29 +838,46 @@ class LiveTradingBot:
             original_volume = setup.lot_size
             current_volume = pos.volume
             
+            if CHALLENGE_MODE and self.challenge_manager:
+                tp1_vol, tp2_vol, tp3_vol = self.challenge_manager.get_partial_close_volumes(original_volume)
+            else:
+                tp1_vol = round(original_volume * 0.33, 2)
+                tp2_vol = round(original_volume * 0.33, 2)
+                tp3_vol = round(original_volume * 0.34, 2)
+            
+            tp1_vol = max(0.01, tp1_vol)
+            tp2_vol = max(0.01, tp2_vol)
+            tp3_vol = max(0.01, tp3_vol)
+            
             if tp1_hit and partial_state == 0:
-                close_volume = round(original_volume * 0.33, 2)
-                close_volume = max(0.01, close_volume)  # Ensure minimum lot size
+                close_volume = min(tp1_vol, current_volume)
                 
-                if close_volume <= current_volume:
-                    log.info(f"[{symbol}] TP1 HIT! Closing 33% ({close_volume} lots) of position")
+                if close_volume >= 0.01:
+                    pct_display = int((tp1_vol / original_volume) * 100) if original_volume > 0 else 0
+                    log.info(f"[{symbol}] TP1 HIT! Closing {pct_display}% ({close_volume} lots) of position")
                     result = self.mt5.partial_close(pos.ticket, close_volume)
                     if result.success:
                         log.info(f"[{symbol}] Partial close successful at {result.price}")
                         setup.partial_closes = 1
                         self._save_pending_setups()
                         
-                        # Move SL to breakeven after TP1
-                        self.mt5.modify_sl_tp(pos.ticket, sl=setup.entry_price, tp=tp2 if tp2 else tp1)
-                        log.info(f"[{symbol}] SL moved to breakeven ({setup.entry_price}), TP updated to TP2: {tp2 if tp2 else 'N/A'}")
+                        be_buffer = abs(setup.entry_price - setup.stop_loss) * 0.1
+                        if setup.direction == "bullish":
+                            new_sl = setup.entry_price + be_buffer
+                        else:
+                            new_sl = setup.entry_price - be_buffer
+                        
+                        self.mt5.modify_sl_tp(pos.ticket, sl=new_sl, tp=tp2 if tp2 else tp1)
+                        log.info(f"[{symbol}] SL moved to BE+buffer ({new_sl:.5f}), TP updated to TP2: {tp2 if tp2 else 'N/A'}")
                     else:
                         log.error(f"[{symbol}] Partial close failed: {result.error}")
             
             elif tp2_hit and partial_state == 1:
                 remaining_volume = current_volume
-                close_volume = round(remaining_volume * 0.50, 2)
-                if close_volume >= 0.01 and close_volume <= remaining_volume:
-                    log.info(f"[{symbol}] TP2 HIT! Closing 50% of remaining ({close_volume} lots)")
+                close_volume = min(tp2_vol, remaining_volume)
+                if close_volume >= 0.01:
+                    pct_display = int((tp2_vol / original_volume) * 100) if original_volume > 0 else 0
+                    log.info(f"[{symbol}] TP2 HIT! Closing {pct_display}% ({close_volume} lots)")
                     result = self.mt5.partial_close(pos.ticket, close_volume)
                     if result.success:
                         log.info(f"[{symbol}] Partial close successful at {result.price}")
@@ -833,6 +900,112 @@ class LiveTradingBot:
                     self._save_pending_setups()
                 else:
                     log.error(f"[{symbol}] Failed to close position: {result.error}")
+    
+    def execute_protection_actions(self) -> bool:
+        """
+        Execute protection actions from Challenge Risk Manager.
+        
+        Called every 30 seconds when CHALLENGE_MODE is enabled.
+        Executes actions returned by challenge_manager.run_protection_check():
+        - CLOSE_ALL: Close all positions and cancel pending orders
+        - CANCEL_PENDING: Cancel specific pending orders
+        - MOVE_SL_BREAKEVEN: Move SL to entry price for specific positions
+        - CLOSE_WORST: Close the worst performing position
+        
+        Returns:
+            True if an emergency action was triggered (halt trading), False otherwise
+        """
+        if not CHALLENGE_MODE or not self.challenge_manager:
+            return False
+        
+        actions = self.challenge_manager.run_protection_check()
+        
+        if not actions:
+            return False
+        
+        actions_sorted = sorted(actions, key=lambda a: a.priority, reverse=True)
+        emergency_triggered = False
+        
+        for action in actions_sorted:
+            log.warning(f"[RISK] Executing protection action: {action.action.value} - {action.reason}")
+            
+            try:
+                if action.action == ActionType.CLOSE_ALL:
+                    log.error("=" * 70)
+                    log.error("EMERGENCY: CLOSE ALL TRIGGERED")
+                    log.error(f"Reason: {action.reason}")
+                    log.error("=" * 70)
+                    
+                    positions = self.mt5.get_my_positions()
+                    for pos in positions:
+                        result = self.mt5.close_position(pos.ticket)
+                        if result.success:
+                            log.info(f"  ✓ Closed {pos.symbol} at {result.price}")
+                            self.risk_manager.record_trade_close(
+                                order_id=pos.ticket,
+                                exit_price=result.price,
+                                pnl_usd=pos.profit,
+                            )
+                        else:
+                            log.error(f"  ✗ Failed to close {pos.symbol}: {result.error}")
+                    
+                    pending_orders = self.mt5.get_my_pending_orders()
+                    for order in pending_orders:
+                        self.mt5.cancel_pending_order(order.ticket)
+                        log.info(f"  ✓ Cancelled pending order {order.ticket}")
+                    
+                    self.pending_setups.clear()
+                    self._save_pending_setups()
+                    
+                    action.executed = True
+                    emergency_triggered = True
+                    
+                elif action.action == ActionType.CANCEL_PENDING:
+                    for ticket in action.positions_affected:
+                        result = self.mt5.cancel_pending_order(ticket)
+                        if result:
+                            log.info(f"  ✓ Cancelled pending order {ticket}")
+                        else:
+                            log.error(f"  ✗ Failed to cancel pending order {ticket}")
+                    action.executed = True
+                    
+                elif action.action == ActionType.MOVE_SL_BREAKEVEN:
+                    for ticket in action.positions_affected:
+                        positions = self.mt5.get_my_positions()
+                        pos = next((p for p in positions if p.ticket == ticket), None)
+                        if pos:
+                            result = self.mt5.modify_sl_tp(ticket, sl=pos.price_open)
+                            if result:
+                                log.info(f"  ✓ Moved SL to breakeven for {pos.symbol} ({pos.price_open:.5f})")
+                            else:
+                                log.error(f"  ✗ Failed to move SL to breakeven for {pos.symbol}")
+                        else:
+                            log.warning(f"  Position {ticket} not found for SL modification")
+                    action.executed = True
+                    
+                elif action.action == ActionType.CLOSE_WORST:
+                    for ticket in action.positions_affected:
+                        result = self.mt5.close_position(ticket)
+                        if result.success:
+                            log.info(f"  ✓ Closed worst position {ticket} at {result.price}")
+                            self.risk_manager.record_trade_close(
+                                order_id=ticket,
+                                exit_price=result.price,
+                                pnl_usd=0.0,
+                            )
+                        else:
+                            log.error(f"  ✗ Failed to close position {ticket}: {result.error}")
+                    action.executed = True
+                    
+                elif action.action == ActionType.HALT_TRADING:
+                    log.error(f"[RISK] Trading HALTED: {action.reason}")
+                    action.executed = True
+                    emergency_triggered = True
+                    
+            except Exception as e:
+                log.error(f"[RISK] Error executing action {action.action.value}: {e}")
+        
+        return emergency_triggered
     
     def scan_all_symbols(self):
         """
@@ -901,32 +1074,37 @@ class LiveTradingBot:
         Main trading loop - runs 24/7.
         
         Schedule:
-        - Every 30 seconds: monitor_live_pnl() for emergency close protection
+        - Every 30 seconds: execute_protection_actions() (challenge mode) or monitor_live_pnl()
         - Every 30 seconds: manage_partial_takes() for partial TP management
         - Every minute: check_pending_orders() and check_position_updates()
         - Every 15 min: validate_all_setups() to ensure pending orders are still valid
         - Every 4 hours: scan_all_symbols() for new setups
         
-        FTMO Compliance:
-        - Hard cap: 1% max risk per single trade
-        - Cumulative: 3% max total open + pending risk
-        - Emergency close at 4.5% daily loss or 9% total drawdown
-        - Partial take profits: 33% at TP1, 33% at TP2, remainder at TP3
+        CHALLENGE MODE ELITE PROTECTION:
+        - Global Risk Controller: Real-time P/L tracking every 30s via execute_protection_actions()
+        - Smart Position Sizing: 0.75% risk per trade, adaptive to DD
+        - Concurrent Trade Limit: Max 5 positions, auto-cancel excess pending
+        - Partial Takes: 45% TP1, 30% TP2, 25% TP3 with BE+buffer (via get_partial_close_volumes)
+        - Emergency Close: 4.5% daily loss or 8% total DD triggers halt
+        - Risk Modes: Aggressive/Normal/Conservative/Ultra-Safe based on DD
+        - Action Types: CLOSE_ALL, CANCEL_PENDING, MOVE_SL_BREAKEVEN, CLOSE_WORST, HALT_TRADING
         """
         log.info("=" * 70)
         log.info("TRADR BOT - LIVE TRADING (FTMO COMPLIANT)")
+        if CHALLENGE_MODE:
+            log.info("*** CHALLENGE MODE: ELITE PROTECTION ENABLED ***")
         log.info("=" * 70)
         log.info(f"Using SAME strategy as backtests (strategy_core.py)")
         log.info(f"FTMO Risk Limits:")
-        log.info(f"  - Max single trade risk: 1%")
-        log.info(f"  - Max cumulative risk: 3%")
-        log.info(f"  - Emergency close at: 4.5% daily loss / 9% drawdown")
-        log.info(f"  - Partial TPs: 33% TP1, 33% TP2, remainder TP3")
+        log.info(f"  - Max single trade risk: 0.75% (Challenge Mode)")
+        log.info(f"  - Max cumulative risk: 3.5%")
+        log.info(f"  - Emergency close at: 4.5% daily loss / 8% drawdown")
+        log.info(f"  - Partial TPs: 45% TP1, 30% TP2, 25% TP3 (Challenge Mode)")
         log.info(f"Server: {MT5_SERVER}")
         log.info(f"Login: {MT5_LOGIN}")
         log.info(f"Scan Interval: {SCAN_INTERVAL_HOURS} hours")
         log.info(f"Validate Interval: {self.VALIDATE_INTERVAL_MINUTES} minutes")
-        log.info(f"P/L Monitor Interval: 10 seconds (live protection)")
+        log.info(f"P/L Monitor Interval: 30 seconds (elite protection)")
         log.info(f"Strategy Mode: {SIGNAL_MODE}")
         log.info(f"Min Confluence: {MIN_CONFLUENCE}/7")
         log.info(f"Symbols: {len(TRADABLE_SYMBOLS)}")
@@ -943,23 +1121,34 @@ class LiveTradingBot:
         
         self.scan_all_symbols()
         self.last_validate_time = datetime.now(timezone.utc)
-        last_pnl_check = datetime.now(timezone.utc)
+        last_protection_check = datetime.now(timezone.utc)
         emergency_triggered = False
         
         while running:
             try:
                 now = datetime.now(timezone.utc)
                 
+                if CHALLENGE_MODE and self.challenge_manager and self.challenge_manager.halted:
+                    if not emergency_triggered:
+                        emergency_triggered = True
+                        log.error(f"Challenge Manager halted trading: {self.challenge_manager.halt_reason}")
+                
                 if not emergency_triggered:
-                    time_since_pnl_check = (now - last_pnl_check).total_seconds()
-                    if time_since_pnl_check >= 10:  # Check every 10 seconds for faster response
-                        if self.monitor_live_pnl():
-                            emergency_triggered = True
-                            log.error("Emergency close triggered - halting all trading")
-                            continue
+                    time_since_protection_check = (now - last_protection_check).total_seconds()
+                    if time_since_protection_check >= 30:
+                        if CHALLENGE_MODE and self.challenge_manager:
+                            if self.execute_protection_actions():
+                                emergency_triggered = True
+                                log.error("Challenge protection triggered emergency - halting all trading")
+                                continue
+                        else:
+                            if self.monitor_live_pnl():
+                                emergency_triggered = True
+                                log.error("Emergency close triggered - halting all trading")
+                                continue
                         
                         self.manage_partial_takes()
-                        last_pnl_check = now
+                        last_protection_check = now
                 
                 if emergency_triggered:
                     time.sleep(60)
@@ -998,6 +1187,7 @@ class LiveTradingBot:
                 time.sleep(60)
         
         log.info("Shutting down...")
+        
         self._save_pending_setups()
         self.disconnect()
         log.info("Bot stopped")
